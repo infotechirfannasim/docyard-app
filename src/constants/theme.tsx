@@ -1,0 +1,47 @@
+export const Colors = {
+  light: {
+    text: '#000000',
+    background: '#ffffff',
+    primary: '#0d96c8',
+    secondary: '#75daff',
+    backgroundElement: '#F0F0F3',
+    backgroundSelected: '#E0E1E6',
+    textSecondary: '#60646C',
+    progressIndicator: "#00000042",
+    completedProgressIndicator: "#ffffffdd",
+    drawerBackground: "#00629a",
+    drawerActiveTintColor: "#7fdbff",
+    drawerInactiveTintColor: "#d7e1e7",
+    nativeTabBackground: "#f0f8fb",
+    nativeTabIconColor: "#417689",
+    nativeTabTintColor: '#006488',
+    nativeTabIndicatorColor: '#b2eaff',
+    cardItemGridColor: '#fcfeff',
+    modalDropDownIconColor: "#417689",
+
+  },
+  dark: {
+    text: '#dedede',
+    background: '#121212',
+    primary: '#0d96c8',
+    secondary: '#75daff',
+    backgroundElement: '#141414',
+    backgroundSelected: '#2E3135',
+    textSecondary: '#B0B4BA',
+    progressIndicator: "#00000042",
+    completedProgressIndicator: "#ffffffdd",
+    drawerBackground: "#141414",
+    drawerActiveTintColor: "#00a5e6",
+    drawerInactiveTintColor: "#b0b0b0",
+    nativeTabBackground: "#171717",
+    nativeTabIconColor: "#bfc6c9",
+    nativeTabTintColor: '#daf5ff',
+    nativeTabIndicatorColor: '#005371',
+    cardItemGridColor: '#121a1d',
+    modalDropDownIconColor: '#005371',
+
+  },
+} as const;
+
+
+export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;

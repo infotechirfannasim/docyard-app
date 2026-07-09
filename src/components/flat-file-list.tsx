@@ -1,3 +1,4 @@
+import { useFiles } from "@/context/files-provider";
 import { useTheme } from "@/context/theme-provider";
 import { FileDataType } from "@/types/file-data-type";
 import { router } from "expo-router";
@@ -6,15 +7,17 @@ import { Dimensions, FlatList, Modal, Pressable, View } from "react-native";
 import { FileListItemGrid, FileListItemList } from "./file-list-item-component";
 import ModelDropDownItem from "./modal-dropdown-item";
 
-export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder, isRecentDocuments }:
+export function FlatFileList({ files, isGridView, filesOnly, goToFolder, isRecentDocuments, isTrash }:
     {
-        dummyFilesData: FileDataType[];
+        files: FileDataType[];
         isGridView: boolean;
         filesOnly?: boolean;
         goToFolder: (file: FileDataType) => void;
         isRecentDocuments?: boolean
+        isTrash?: boolean
     }): import("react").ReactElement<unknown, string | import("react").JSXElementConstructor<any>> | null {
-    const filesData = filesOnly ? dummyFilesData.filter((file) => !file.folder) : dummyFilesData;
+    const {visibleFiles  : allfiles, updateFile} = useFiles();
+    const filesData = filesOnly ? files.filter((file) => !file.folder && !file.archived) : files;
     const theme = useTheme();
     const screenHeight = Dimensions.get("screen").height;
     const screenWidth = Dimensions.get("screen").width;
@@ -63,7 +66,6 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
             <Pressable
                 style={{ flex: 1 }}
                 onPress={() => setMenuVisible(false)}
-            // android_ripple={{ color: theme.theme.secondary + "20" }}
             >
                 <View
                     style={{
@@ -73,16 +75,15 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
                             : { top: menuPosition.y }),
                         right: menuPosition.x,
                         backgroundColor: theme.theme.background,
-                        // borderRadius: 10,
-                        borderWidth: 1,
                         borderColor: theme.theme.text + "20",
                         paddingVertical: 2,
                         minWidth: 140,
                         elevation: 6,
                     }}
                 >
+                    ({!isTrash}
 
-                    {isRecentDocuments && !selectedFile?.folder ?
+                    {isRecentDocuments && !selectedFile?.folder && !isTrash ?
                         <ModelDropDownItem
                             onPress={() => {
                                 setMenuVisible(false);
@@ -90,8 +91,8 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
                                 if (isRecentDocuments && !selectedFile?.folder) {
                                     //Open file location
                                     router.push({
-                                        pathname: "/(drawer)/(tabs)/document-library",
-                                        params: { fileId: selectedFile?.id },
+                                        pathname: "/document-library",
+                                        params: { fileId: selectedFile?.id, path: selectedFile?.location?.split("/") },
                                     });
                                 }
 
@@ -103,7 +104,7 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
                         /> : null
                     }
 
-                    {!isRecentDocuments?
+                    {!isRecentDocuments  && !isTrash?
                         <ModelDropDownItem
                             onPress={() => {
                                 setMenuVisible(false)
@@ -115,7 +116,7 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
                         : null}
 
 
-                    {!isRecentDocuments?
+                    {!isRecentDocuments && !isTrash?
                         <ModelDropDownItem
                             onPress={() => {
                                 setMenuVisible(false)
@@ -125,6 +126,15 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
                             theme={theme}
                         />
                         : null}
+                        <ModelDropDownItem
+                            onPress={() => {
+                                updateFavourite();
+                            }}
+                            iconName={selectedFile?.favourite ? "star" : "star-outline"}
+                            text={selectedFile?.favourite ? "Unfavourite" : "Favourite"}
+                            theme={theme}
+                        />
+                        
 
                     <ModelDropDownItem
                         onPress={() => {
@@ -172,6 +182,8 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
                         theme={theme} 
                          />
                     : null}
+)
+
 
                     <ModelDropDownItem
                         onPress={() => {
@@ -188,4 +200,9 @@ export function FlatFileList({ dummyFilesData, isGridView, filesOnly, goToFolder
     </>
 
 
+
+    function updateFavourite() {
+        setMenuVisible(false);
+        updateFile(selectedFile?.id!, { favourite: !selectedFile?.favourite });
+    }
 }

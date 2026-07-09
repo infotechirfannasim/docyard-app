@@ -6,6 +6,6 @@ export default function DocumentLibraryFolder() {
     console.log("DocumentLibraryFolder path: ", path);
     console.log("DocumentLibraryFolder fileId: ", fileId);
   return (
-    <FilesView  path={path} fileId={Number(fileId)} isFolder={isFolder === "true"} isRecentDocuments={false} />
+    <FilesView header="Document Library"  path={path} fileId={Number(fileId)} isFolder={isFolder === "true"} isRecentDocuments={false} />
   )
 }

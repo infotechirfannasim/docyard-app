@@ -16,12 +16,12 @@ type FilesViewProps = {
     path: string[],
     header: string,
     isFolder: boolean;
-    isFavourite?: boolean;
-    isRecentDocuments?: boolean;
-    isTrash?: boolean;
+    isFavouriteView?: boolean;
+    isRecentDocumentsView?: boolean;
+    isTrashView?: boolean;
 };
 
-export default function FilesView({ fileId, path, header, isFolder, isFavourite, isRecentDocuments = false, isTrash = false }: FilesViewProps) {
+export default function FilesView({ fileId, path, header, isFolder, isFavouriteView, isRecentDocumentsView = false, isTrashView = false }: FilesViewProps) {
     const rowRef = useRef<View>(null);
     const { visibleFiles, files: allFiles } = useFiles();
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
@@ -29,13 +29,14 @@ export default function FilesView({ fileId, path, header, isFolder, isFavourite,
 
     const fileIdNumber = Number(fileId);
     const file = visibleFiles.find((f) => f.id === fileIdNumber && f.folder === false);
+    console.log("isRecentDocumentsView", isRecentDocumentsView, "isTrashView", isTrashView);
 
     // --- derive `visibleFiles` directly, no useState/useEffect needed ---
     const files: FileDataType[] = (() => {
-        if (isFavourite) {
+        if (isFavouriteView) {
             return visibleFiles.filter((file) => file.favourite === true).sort((a, b) => a.folder === b.folder ? 0 : a.folder ? -1 : 1); // folders first
         }
-        if (isTrash) {
+        if (isTrashView) {
             return allFiles.filter((file) => file.archived === true).sort((a, b) => a.folder === b.folder ? 0 : a.folder ? -1 : 1); // folders first
         }
         if (file && file.location && !file.folder) {
@@ -73,7 +74,7 @@ export default function FilesView({ fileId, path, header, isFolder, isFavourite,
 
 
     function goToDocumentLibrary() {
-        if (isFavourite) return;
+        if (isFavouriteView) return;
         if (router.canDismiss()) {
             router.dismissAll();
         }
@@ -122,7 +123,7 @@ export default function FilesView({ fileId, path, header, isFolder, isFavourite,
                     <Ionicons name={isGridView ? "grid-outline" : "list-outline"} color={theme.theme.text} size={20} />
                 </Pressable>
             </ThemedView>
-            <FlatFileList files={files} isGridView={isGridView} goToFolder={goToFolder} isRecentDocuments={isRecentDocuments} />
+            <FlatFileList files={files} isGridView={isGridView} goToFolder={goToFolder} isRecentDocumentsView={isRecentDocumentsView} isTrashView={isTrashView} isFavouriteView={isFavouriteView} />
         </ThemedView>
 
         <Modal

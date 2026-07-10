@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 export default function Favourites() {
 
   return (
-  <FilesView header="Favourites" fileId={undefined} path={[]} isFolder={false} isFavourite={true} />
+  <FilesView header="Favourites" fileId={undefined} path={[]} isFolder={false} isFavouriteView={true} />
   );
 }
 

@@ -67,7 +67,7 @@ export default function Home() {
           </Pressable>
         </ThemedView>
       </ThemedView>
-      <FlatFileList files={files} isGridView={isGridView} filesOnly={true} goToFolder={() => {}} isRecentDocuments={true} />
+      <FlatFileList files={files} isGridView={isGridView} filesOnly={true} goToFolder={() => {}} isRecentDocumentsView={true} />
 
     </ThemedView>
   );

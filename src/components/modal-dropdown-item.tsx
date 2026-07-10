@@ -5,7 +5,7 @@ import { ThemedText } from "./themed-text";
 
 export type ModelDropDownItemProps = {
     itemKey: string;
-    onPress: ()=>void; // Optional prop for the selected file
+    onPress: () => void; // Optional prop for the selected file
     text: string;
     iconName: keyof typeof Ionicons.glyphMap;
     theme: ThemeContextType; // Optional prop for the selected file

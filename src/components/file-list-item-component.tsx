@@ -126,6 +126,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 10,
     flexDirection: "row",
-    boxShadow: "0px 0px 3px 2px #0d96c813",
+    boxShadow: "0px 0px 3px 2px #0080ae13",
   }
 });

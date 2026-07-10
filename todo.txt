@@ -1,0 +1,12 @@
+Update the height of drawer, depending upon the screenOrientation
+
+
+
+folder : delivery/ test/ personal / office
+delivery test personal office
+
+
+test -> delivery test (pass=test) get data on location: delivery/test/  
+personal -> delivery test personal
+
+

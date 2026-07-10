@@ -74,7 +74,7 @@ export default function FilesView({ fileId, path, header, isFolder, isFavouriteV
 
 
     function goToDocumentLibrary() {
-        if (isFavouriteView) return;
+        if (isFavouriteView || isTrashView || path.length === 0) return;
         if (router.canDismiss()) {
             router.dismissAll();
         }

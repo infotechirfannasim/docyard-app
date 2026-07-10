@@ -1,19 +1,10 @@
 import FilesView from '@/components/files-view';
-import { useTheme } from '@/context/theme-provider';
-import { dummyFiles } from '@/data/dummy-file-data';
-import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 
-export default function Starred() {
-
-  const [isGridView, setGridView] = useState(true);
-  const theme = useTheme();
-  const dummyFilesData = dummyFiles.filter((file) => file.favourite === true);
+export default function Favourites() {
 
   return (
-  <FilesView  fileId={undefined} path={[]} isFolder={false} isStarred={true} />
-
-
+  <FilesView header="Favourites" fileId={undefined} path={[]} isFolder={false} isFavouriteView={true} />
   );
 }
 

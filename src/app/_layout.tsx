@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from "@/context/auth-context";
+import { FilesProvider } from "@/context/files-provider";
 import { LayoutProvider } from "@/context/layout-context";
 import { ThemeProvider } from "@/context/theme-provider";
 import { Stack } from "expo-router";
@@ -8,11 +9,10 @@ export default function RootAppLayout() {
     <ThemeProvider >
       <AuthProvider>
         <LayoutProvider>
-
+          <FilesProvider>
           <AppLayout />
-
+          </FilesProvider>
         </LayoutProvider>
-
       </AuthProvider>
     </ThemeProvider>
   );

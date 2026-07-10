@@ -1,10 +1,7 @@
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import FilesView from '@/components/files-view';
 
 export default function Trash() {
   return (
-     <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ThemedText>Trash</ThemedText>
-        </ThemedView>
-  )
+    <FilesView header='Trash' fileId={undefined} path={[]} isTrashView={true} isFolder={true} />
+  );
 }

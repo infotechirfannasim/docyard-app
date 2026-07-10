@@ -3,9 +3,9 @@ import { FlatFileList } from "@/components/flat-file-list";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { styles as customStyles } from "@/constants/custom-styles";
+import { useFiles } from "@/context/files-provider";
+import { useLayout } from "@/context/layout-context";
 import { useTheme } from "@/context/theme-provider";
-import { dummyFiles } from "@/data/dummy-file-data";
-import { FileDataType } from "@/types/file-data-type";
 import { Host, LinearProgressIndicator } from '@expo/ui/jetpack-compose';
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,9 +18,9 @@ export default function Home() {
   const cardItems = ["Images", "Videos", "Documents", "Others"]; // Replace with actual card items logic
   const gradients: [ColorValue, ColorValue][] = [["#21BED4", '#3A8DBB'], ["#3A94BA", '#3965BB'], ["#BBBB3A", '#82BB3A'], ["#D03925", "#D08125"]];
   const cardIcons: (keyof typeof Ionicons.glyphMap)[] = ["images", "videocam", "document", "file-tray-sharp", "ellipsis-horizontal", "enter"];
-  const dummyFilesData: FileDataType[] = dummyFiles;
+  const { files }= useFiles();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isGridView, setGridView] = useState(false);
+  const { isGridView, toggleView } = useLayout();
 
   return (
     <ThemedView style={customStyles.container}>
@@ -62,12 +62,12 @@ export default function Home() {
       <ThemedView style={styles.body}>
         <ThemedView style={styles.bodyHeader}>
           <ThemedText type={"extraLargeBold"}>Recent Documents</ThemedText>
-          <Pressable onPress={() => setGridView(!isGridView)}>
+          <Pressable onPress={() => toggleView()}>
             <Ionicons name={isGridView ? "grid-outline" : "list-outline"} color={theme.theme.text} size={25}  />
           </Pressable>
         </ThemedView>
       </ThemedView>
-      <FlatFileList dummyFilesData={dummyFilesData} isGridView={isGridView} filesOnly={true} goToFolder={() => {}} isRecentDocuments={true} />
+      <FlatFileList files={files} isGridView={isGridView} filesOnly={true} goToFolder={() => {}} isRecentDocumentsView={true} />
 
     </ThemedView>
   );

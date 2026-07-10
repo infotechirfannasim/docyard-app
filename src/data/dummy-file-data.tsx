@@ -1,6 +1,6 @@
 import { FileDataType } from "@/types/file-data-type";
 
-export const dummyFiles: FileDataType[] = [
+export var dummyFiles: FileDataType[] = [
     {
         "id": 36944,
         "createdOn": "2025-10-03T03:14:29-07:00",
@@ -13,7 +13,7 @@ export const dummyFiles: FileDataType[] = [
         "size": "0.23 KB",
         "sizeBytes": 24,
         "mimeType": "application/x-rar-compressed",
-        "location": "Timelines/",
+        "location": "Timelines/Personal/General Documents/Taxes",
         "extension": "rar",
         "currentVersion": 1.0,
         "content": null,
@@ -27,6 +27,9 @@ export const dummyFiles: FileDataType[] = [
         "updatedByName": "Irfan Nasim",
         "updatedByUsername": "irfan.nasim",
         "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+        "archived" : false,
+        "archival" : false,
+        "archivalOn" : null
     },
     {
         "id": 36945,
@@ -54,6 +57,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : true,
+            "archival" : false,
+            "archivalOn" : null
             
     },
      {
@@ -82,6 +88,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36947,
@@ -109,6 +118,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36948,
@@ -136,6 +148,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36949,
@@ -163,6 +178,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
          {
             "id": 36950,
@@ -190,6 +208,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
          {
             "id": 36951,
@@ -217,6 +238,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
            {
             "id": 37324,
@@ -244,6 +268,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Mar 12 at 10:05 pm",
+            "archived" : true,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36936,
@@ -271,6 +298,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36937,
@@ -298,6 +328,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:13 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36938,
@@ -325,6 +358,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:13 am",
+            "archived" : true,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36939,
@@ -352,6 +388,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:12 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36940,
@@ -379,6 +418,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:13 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
         {
             "id": 36941,
@@ -406,6 +448,9 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:12 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         },
          {
             "id": 36942,
@@ -433,5 +478,8 @@ export const dummyFiles: FileDataType[] = [
             "updatedByName": "Irfan Nasim",
             "updatedByUsername": "irfan.nasim",
             "updatedOnDetail": "Oct 3,2025 at 3:12 am",
+            "archived" : false,
+            "archival" : false,
+            "archivalOn" : null
         }
 ]

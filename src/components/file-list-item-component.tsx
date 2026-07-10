@@ -16,18 +16,18 @@ type FileListItemProps = {
   screenHeight: number; // Optional prop for screen height
   screenWidth: number; // Optional prop for screen width
   goToFolder: (file: FileDataType) => void; // Optional prop for the selected file
-  isRecentDocuments?: boolean; // Optional prop to indicate if it's a recent document
+  isRecentDocumentsView?: boolean; // Optional prop to indicate if it's a recent document
 };
 const BOTTOM_THRESHOLD = 240; // if touch is within this many px of the bottom, flip up
 const INCREASE_BOTTOM_THRESHOLD = 140; // if touch is within this many px of the bottom, flip up
 const DELAY_LONG_PRESS = 200;
 
 
-export function FileListItemGrid({ file, index, month, day, year, theme, onLongPressMenu, screenHeight, screenWidth, goToFolder, isRecentDocuments }: FileListItemProps) {
+export function FileListItemGrid({ file, index, month, day, year, theme, onLongPressMenu, screenHeight, screenWidth, goToFolder, isRecentDocumentsView }: FileListItemProps) {
   const rowRef = useRef<View>(null);
   const handleLongPress = () => {
     rowRef.current?.measure((fx, fy, width, height, pageX, pageY) => {
-      const isNearBottom = pageY + height > screenHeight - (BOTTOM_THRESHOLD + (!isRecentDocuments ? INCREASE_BOTTOM_THRESHOLD : 0));
+      const isNearBottom = pageY + height > screenHeight - (BOTTOM_THRESHOLD + (!isRecentDocumentsView ? INCREASE_BOTTOM_THRESHOLD : 0));
 
       onLongPressMenu({
         x: screenWidth - (pageX + width), // distance from the card's right edge to the screen's right edge
@@ -65,12 +65,12 @@ export function FileListItemGrid({ file, index, month, day, year, theme, onLongP
 
 
 
-export function FileListItemList({ file, index, month, day, year, theme, onLongPressMenu, screenHeight, screenWidth, goToFolder, isRecentDocuments }: FileListItemProps) {
+export function FileListItemList({ file, index, month, day, year, theme, onLongPressMenu, screenHeight, screenWidth, goToFolder, isRecentDocumentsView }: FileListItemProps) {
   const rowRef = useRef<View>(null);
 
   const handleLongPress = () => {
     rowRef.current?.measure((fx, fy, width, height, pageX, pageY) => {
-      const isNearBottom = pageY + height > screenHeight - (BOTTOM_THRESHOLD + (isRecentDocuments === false ? INCREASE_BOTTOM_THRESHOLD : 0));
+      const isNearBottom = pageY + height > screenHeight - (BOTTOM_THRESHOLD + (isRecentDocumentsView === false ? INCREASE_BOTTOM_THRESHOLD : 0));
       onLongPressMenu({
         x: 20,
         y: isNearBottom ? pageY : pageY + height,

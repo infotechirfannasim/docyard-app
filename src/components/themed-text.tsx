@@ -4,7 +4,7 @@ import { useTheme } from '@/context/theme-provider';
 import { ThemeColor } from '../constants/theme';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'extraSmall' | 'extraSmallBold' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code' | 'medium' | 'large' | 'mediumBold' | 'largeBold' | 'extraLarge' | 'extraLargeBold' ;
+  type?: 'default' | 'title' | 'extraSmall' | 'extraSmallBold' | 'extraExtraSmall' | 'extraExtraSmallBold' | 'small' | 'smallBold' | 'subtitle' | 'link' | 'linkPrimary' | 'code' | 'medium' | 'large' | 'mediumBold' | 'largeBold' | 'extraLarge' | 'extraLargeBold'  ;
   themeColor?: ThemeColor;
 };
 
@@ -20,6 +20,8 @@ export function ThemedText({ style, type = 'default', themeColor, children, ...r
         type === 'small' && styles.small,
         type === 'extraSmall' && styles.extraSmall,
         type === 'extraSmallBold' && styles.extraSmallBold,
+         type === 'extraExtraSmall' && styles.extraExtraSmall,
+        type === 'extraExtraSmallBold' && styles.extraExtraSmallBold,
         type === 'smallBold' && styles.smallBold,
         type === 'subtitle' && styles.subtitle,
         type === 'link' && styles.link,
@@ -48,6 +50,16 @@ const styles = StyleSheet.create({
   },
   extraSmallBold: {
     fontSize: 12,
+    // lineHeight: 30,
+    fontWeight: 500,
+  },
+   extraExtraSmall: {
+    fontSize: 11,
+    // lineHeight: 30,
+    fontWeight: 300,
+  },
+  extraExtraSmallBold: {
+    fontSize: 11,
     // lineHeight: 30,
     fontWeight: 500,
   },

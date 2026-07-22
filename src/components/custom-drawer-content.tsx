@@ -7,7 +7,7 @@ import {
     DrawerContentScrollView,
     DrawerItemList,
 } from "expo-router/drawer";
-import { Button, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { ThemedText } from "./themed-text";
 
 export function CustomDrawerContent(props: DrawerContentComponentProps) {
@@ -26,15 +26,22 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
             
                   <View style={{ alignSelf: "flex-end", justifyContent: "flex-end", alignItems: "flex-end", flexGrow: 1, marginTop: 15 }}>
             
-                    <Button onPress={() => theme.toggleTheme()} title="Toggle Theme" />
+                    <Pressable
+                        onPress={() => theme.toggleTheme()}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 20 }}
+                    >
+                        <Ionicons name={theme.mode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={25} color={theme.theme.drawerActiveTintColor} />
+                        <ThemedText type="mediumBold" style={{ color: theme.theme.drawerActiveTintColor }}>
+                            {theme.mode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                        </ThemedText>
+                    </Pressable>
                   </View>
+            
             <View style={{ marginTop: "auto", backgroundColor: theme.theme.drawerActiveTintColor + "20" }}>
                 <Pressable
                     onPress={()=>{
-                        console.log("is logged in: ", isLoggedIn);
-                        console.log("Logging out...");
+
                         logout();
-                        console.log("is logged in: ", isLoggedIn);
                     }}
                     style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 20 }}
                 >

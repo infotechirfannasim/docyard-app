@@ -1,9 +1,17 @@
-import { Text, View } from 'react-native'
+import FilesView from '@/components/files-view';
+import { ThemedView } from '@/components/themed-view';
+import { useGetFilesData } from '@/hooks/queries/use-get-files-data.tsx';
+import { ActivityIndicator } from 'react-native';
 
 export default function Archive() {
-  return (
-    <View>
-      <Text>Archive</Text>
-    </View>
-  )
+     const { files: filesData, isFilesLoading, user, isUserLoading } = useGetFilesData("archival");
+    
+      return (
+        isUserLoading || isFilesLoading ? (
+          <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <ActivityIndicator size="large" />
+          </ThemedView>
+        ) :
+          <FilesView header="Archival" files={filesData!} isFolder={true} viewType="archival" />
+      );
 }

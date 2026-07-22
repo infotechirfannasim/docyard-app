@@ -1,26 +1,26 @@
 // context/files-provider.tsx
 import { dummyFiles as initialFiles } from "@/data/dummy-file-data";
-import { FileDataType } from "@/types/file-data-type";
+import { FileDto } from "@/types/api/file-dto";
 import { createContext, ReactNode, useContext, useMemo, useState } from "react";
 
 type FilesContextType = {
-  files: FileDataType[];
-  addFile: (file: FileDataType) => void;
-  updateFile: (id: number, updates: Partial<FileDataType>) => void;
+  files: FileDto[];
+  addFile: (file: FileDto) => void;
+  updateFile: (id: number, updates: Partial<FileDto>) => void;
   deleteFile: (id: number) => void;
-  visibleFiles: FileDataType[];
+  visibleFiles: FileDto[];
 };
 
 const FilesContext = createContext<FilesContextType | undefined>(undefined);
 
 export const FilesProvider = ({ children }: { children: ReactNode }) => {
-  const [files, setFiles] = useState<FileDataType[]>(initialFiles);
+  const [files, setFiles] = useState<FileDto[]>(initialFiles);
 
-  const addFile = (file: FileDataType) => {
+  const addFile = (file: FileDto) => {
     setFiles((prev) => [...prev, file]);
   };
 
-  const updateFile = (id: number, updates: Partial<FileDataType>) => {
+  const updateFile = (id: number, updates: Partial<FileDto>) => {
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...updates } : f)));
   };
 

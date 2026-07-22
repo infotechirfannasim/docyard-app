@@ -1,6 +1,6 @@
-import { FileDataType } from "@/types/file-data-type";
+import { FileDto } from "@/types/api/file-dto";
 
-export var dummyFiles: FileDataType[] = [
+export var dummyFiles: FileDto[] = [
     {
         "id": 36944,
         "createdOn": "2025-10-03T03:14:29-07:00",
@@ -29,7 +29,6 @@ export var dummyFiles: FileDataType[] = [
         "updatedOnDetail": "Oct 3,2025 at 3:14 am",
         "archived" : false,
         "archival" : false,
-        "archivalOn" : null
     },
     {
         "id": 36945,
@@ -59,7 +58,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : true,
             "archival" : false,
-            "archivalOn" : null
             
     },
      {
@@ -90,7 +88,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36947,
@@ -120,7 +117,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36948,
@@ -150,7 +146,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36949,
@@ -180,7 +175,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
          {
             "id": 36950,
@@ -210,7 +204,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
          {
             "id": 36951,
@@ -240,7 +233,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
            {
             "id": 37324,
@@ -270,7 +262,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Mar 12 at 10:05 pm",
             "archived" : true,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36936,
@@ -300,7 +291,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:14 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36937,
@@ -330,7 +320,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:13 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36938,
@@ -360,7 +349,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:13 am",
             "archived" : true,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36939,
@@ -390,7 +378,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:12 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36940,
@@ -420,7 +407,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:13 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
         {
             "id": 36941,
@@ -450,7 +436,6 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:12 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         },
          {
             "id": 36942,
@@ -480,6 +465,5 @@ export var dummyFiles: FileDataType[] = [
             "updatedOnDetail": "Oct 3,2025 at 3:12 am",
             "archived" : false,
             "archival" : false,
-            "archivalOn" : null
         }
 ]

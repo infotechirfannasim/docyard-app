@@ -5,6 +5,8 @@ export default function TabLayout() {
     const theme = useTheme();
     
   return (
+    console.log("Native Tabs Mounted"),
+
     
     <NativeTabs rippleColor={"transparent"} backgroundColor={theme.theme.nativeTabBackground} tintColor={theme.theme.nativeTabTintColor} iconColor={theme.theme.nativeTabIconColor} indicatorColor={theme.theme.nativeTabIndicatorColor}  >
       <NativeTabs.Trigger name="home" >
@@ -13,7 +15,7 @@ export default function TabLayout() {
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="document-library" contentStyle={{ backgroundColor: theme.theme.background }}>
         <NativeTabs.Trigger.Icon sf="book" md="library_books" />
-        <NativeTabs.Trigger.Label>Document Library</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Documents</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="favourite">
         <NativeTabs.Trigger.Icon sf="star.fill" md="star_border" />

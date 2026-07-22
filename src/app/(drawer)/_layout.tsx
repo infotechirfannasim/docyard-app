@@ -17,12 +17,14 @@ function AppLayout() {
 
   
   return (
+    console.log("Drawer Mounted"),
     <>
       <StatusBar barStyle={theme.mode === 'dark' ? 'light-content' : 'dark-content'} />
       <Drawer
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
+      
+        drawerContent={CustomDrawerContent}
         screenOptions={{
-          
+        
           drawerContentStyle: {
             padding: 0,
             backgroundColor: theme.theme.text,
@@ -33,6 +35,7 @@ function AppLayout() {
             backgroundColor: theme.theme.background,
           },
           drawerStyle: {
+            width: 320,
             backgroundColor: theme.theme.drawerBackground,
           },
           headerTintColor: theme.theme.text,

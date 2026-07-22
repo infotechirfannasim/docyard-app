@@ -1,12 +1,12 @@
 import SvgIcon from "@/constants/svg-icons";
 import { ThemeContextType } from "@/context/theme-provider";
-import { FileDataType } from "@/types/file-data-type";
+import { FileDto } from "@/types/api/file-dto";
 import { useRef } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "./themed-text";
 
 type FileListItemProps = {
-  file: FileDataType;
+  file: FileDto;
   index: number;
   month: string;
   day: number;
@@ -15,7 +15,7 @@ type FileListItemProps = {
   onLongPressMenu: (position: { x: number; y: number, flipped: boolean }) => void;
   screenHeight: number; // Optional prop for screen height
   screenWidth: number; // Optional prop for screen width
-  goToFolder: (file: FileDataType) => void; // Optional prop for the selected file
+  goToFolder: (file: FileDto) => void; // Optional prop for the selected file
   isRecentDocumentsView?: boolean; // Optional prop to indicate if it's a recent document
 };
 const BOTTOM_THRESHOLD = 240; // if touch is within this many px of the bottom, flip up
@@ -38,24 +38,31 @@ export function FileListItemGrid({ file, index, month, day, year, theme, onLongP
   };
   return <View style={[styles.cardItemGrid, { backgroundColor: theme.theme.cardItemGridColor }]} ref={rowRef}>
     <Pressable
-      key={file.id}
+          key={`${file.id}-Grid`}
+
       onPress={() => goToFolder(file)}
       onLongPress={handleLongPress}
       android_ripple={{ color: theme.theme.secondary + "20" }}
       unstable_pressDelay={100}
       delayLongPress={DELAY_LONG_PRESS}
-      style={{ flex: 1, paddingHorizontal: 15, }}
+      style={{ flex: 1, paddingHorizontal: 8}}
     >
       <View style={{ flexDirection: "row", justifyContent: "flex-start", alignItems: "center", flex: 1 }}>
 
         <SvgIcon extension={file.folder ? file.shared ? 'folder-shared' : 'folder' : file.extension!} style={{ marginRight: 10 }} />
 
 
-        <View style={{ flexDirection: "column", height: 80, justifyContent: "center", flex: 1, flexShrink: 1 }}>
+        <View style={{ flexDirection: "column", height: 80, justifyContent: "center", flex: 1, flexShrink: 1, marginRight: 4 }}>
           <ThemedText numberOfLines={2} type={"extraSmallBold"}>{file.name} </ThemedText>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 10, marginTop: 8 }}>
-            <ThemedText type={"extraSmallBold"} style={{ color: theme.theme.text + "80" }}>{file.size}</ThemedText>
-            <ThemedText type={"extraSmall"} style={{ color: theme.theme.text + "80" }}>{month} {day}, {year}</ThemedText>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 4, marginTop: 8 }}>
+            <View style={{ flexShrink: 1}}>
+
+            <ThemedText numberOfLines={1} ellipsizeMode="tail" type={"extraExtraSmallBold"} style={{ color: theme.theme.text + "80", flexShrink: 1 }}>{file.size}</ThemedText>
+            </View>
+            <View style={{ flexShrink: 1 }}>
+
+            <ThemedText numberOfLines={1} ellipsizeMode="tail" type={"extraExtraSmall"} style={{ color: theme.theme.text + "80" }}>{month} {day}, {year}</ThemedText>
+            </View>
           </View>
         </View>
       </View>
@@ -82,7 +89,7 @@ export function FileListItemList({ file, index, month, day, year, theme, onLongP
   return (<>
     <Pressable
       ref={rowRef}
-      key={file.id}
+      key={`${file.id}-List`}
       // style={({ pressed{}}) => ([{ opacity: pressed ? 0.8 : 1 }])}
       onPress={() => goToFolder(file)}
       android_ripple={{ color: theme.theme.secondary + "20" }}
@@ -101,8 +108,8 @@ export function FileListItemList({ file, index, month, day, year, theme, onLongP
         </View>
 
         <View style={{ flexDirection: "column", alignItems: "flex-end", gap: 2, flex: 1 }}>
-          <ThemedText type={"extraSmall"} style={{ color: theme.theme.text + "80" }}>{month} {day}, {year}</ThemedText>
-          <ThemedText type={"extraSmallBold"} style={{ color: theme.theme.text + "80" }}>{file.size}</ThemedText>
+          <ThemedText type={"extraExtraSmall"} style={{ color: theme.theme.text + "80" }}>{month} {day}, {year}</ThemedText>
+          <ThemedText type={"extraExtraSmallBold"} style={{ color: theme.theme.text + "80" }}>{file.size}</ThemedText>
         </View>
       </View>
     </Pressable>
@@ -121,11 +128,11 @@ const styles = StyleSheet.create({
   },
   cardItemGrid: {
     flex: 1,
-    maxWidth: "48%",
+    maxWidth: "49%",
     alignItems: "flex-start",
     justifyContent: "space-between",
     marginBottom: 10,
     flexDirection: "row",
-    boxShadow: "0px 0px 3px 2px #0080ae13",
+    boxShadow: "0px 0px 2px 3px #0080ae0a",
   }
 });

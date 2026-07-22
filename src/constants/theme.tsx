@@ -18,6 +18,9 @@ export const Colors = {
     nativeTabIndicatorColor: '#b2eaff',
     cardItemGridColor: '#f9fdff',
     modalDropDownIconColor: "#417689",
+    onSuccess: "#00d000",
+
+    onError: "#f20000",
 
   },
   dark: {
@@ -39,6 +42,9 @@ export const Colors = {
     nativeTabIndicatorColor: '#005371',
     cardItemGridColor: '#121a1d',
     modalDropDownIconColor: '#005371',
+    onSuccess: "#00ae00",
+    onError: "#a90000",
+
 
   },
 } as const;

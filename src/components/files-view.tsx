@@ -1,130 +1,159 @@
 import { FlatFileList } from '@/components/flat-file-list';
 import { ThemedText } from '@/components/themed-text';
+import ThemedTextInput from '@/components/themed-text-input';
 import { ThemedView } from '@/components/themed-view';
-import { useFiles } from "@/context/files-provider";
+import { UploadAction } from '@/components/upload-action';
+import { useAuth } from '@/context/auth-context';
 import { useLayout } from '@/context/layout-context';
 import { useTheme } from '@/context/theme-provider';
-import { FileDataType } from '@/types/file-data-type';
+import { useCreateFolder, useHierarchy } from '@/hooks/queries/use-files';
+import { useCurrentUser } from '@/hooks/queries/use-user';
+import { FileDto } from '@/types/api/file-dto';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
+
+type ViewType = 'default' | 'favourite' | 'recent' | 'trash' | 'shared-by-me' | 'shared-with-me' | 'archival';
 
 type FilesViewProps = {
     fileId?: number;
-    path: string[],
-    header: string,
+    files: FileDto[];
+    header: "Document Library" | "Favourites" | "Trash" | "Recent Documents" | "Share By Me" | "Share To Me" | "Archival" | "Images" | "Videos" | "Documents" | "Others";
     isFolder: boolean;
-    isFavouriteView?: boolean;
-    isRecentDocumentsView?: boolean;
-    isTrashView?: boolean;
+    viewType?: ViewType;
 };
 
-export default function FilesView({ fileId, path, header, isFolder, isFavouriteView, isRecentDocumentsView = false, isTrashView = false }: FilesViewProps) {
+export default function FilesView({ fileId, files, header, isFolder, viewType = 'default' }: FilesViewProps) {
     const rowRef = useRef<View>(null);
-    const { visibleFiles, files: allFiles } = useFiles();
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
     const [isShowModal, setShowModal] = useState(false);
 
     const fileIdNumber = Number(fileId);
-    const file = visibleFiles.find((f) => f.id === fileIdNumber && f.folder === false);
-    console.log("isRecentDocumentsView", isRecentDocumentsView, "isTrashView", isTrashView);
+    const { data: hierarchy, isLoading: isHierarchyLoading } = useHierarchy(fileIdNumber, !!fileIdNumber);
 
-    // --- derive `visibleFiles` directly, no useState/useEffect needed ---
-    const files: FileDataType[] = (() => {
-        if (isFavouriteView) {
-            return visibleFiles.filter((file) => file.favourite === true).sort((a, b) => a.folder === b.folder ? 0 : a.folder ? -1 : 1); // folders first
-        }
-        if (isTrashView) {
-            return allFiles.filter((file) => file.archived === true).sort((a, b) => a.folder === b.folder ? 0 : a.folder ? -1 : 1); // folders first
-        }
-        if (file && file.location && !file.folder) {
-            return visibleFiles.filter((f) => f.location === file.location && f.folder === false); //Get all visibleFiles in the same location as the fileId
-        }
-        if (isFolder) {
-            const folderPath = path.length === 1 ? `${path[0]}/` : path.join("/");
-            return visibleFiles.filter((f) => f.location === folderPath);
-        }
-        return visibleFiles.filter((f) => f.folder); // top-level folders fallback
-    })();
-
-    // --- derive `breadCrumb` directly too ---
-    const breadCrumb: string[] =
-        file && file.location && !file.folder
-            ? file.location.split("/").filter((item) => item !== "")
-            : path;
+    const breadCrumbItems: FileDto[] | null = hierarchy?.length ? hierarchy : null;
+    const breadCrumb: string[] = breadCrumbItems ? breadCrumbItems.map((item) => item.name) : [];
 
     const { isGridView, toggleView } = useLayout();
     const theme = useTheme();
-    function goToFolder(fileOrFolder: FileDataType, customPath?: string[]) {
-        if (fileOrFolder.folder) {
+    const createFolderMutation = useCreateFolder();
+    const { username } = useAuth();
+    const { data: user } = useCurrentUser(username);
 
+    const [isCreateFolderModalVisible, setCreateFolderModalVisible] = useState(false);
+    const [folderName, setFolderName] = useState('');
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+    const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+    };
+
+    useEffect(() => {
+        if (!toastMessage) return;
+        const timer = setTimeout(() => setToastMessage(''), 3000);
+        return () => clearTimeout(timer);
+    }, [toastMessage]);
+
+    function goToFolder(fileOrFolder: FileDto, customPath?: string[]) {
+        if (fileOrFolder.folder) {
+            const currentPath = breadCrumbItems?.map((h) => h.name) ?? [];
+            const newPath = customPath ?? [...currentPath, fileOrFolder.name];
             try {
-                router.push(
-                    {
-                        pathname: "/document-library/[...path]" as any,
-                        params: { path: customPath ?? [...path, fileOrFolder.name], fileId: fileOrFolder.id, isFolder: `${fileOrFolder.folder}` },
-                    });
+                router.push({
+                    pathname: "/document-library/[...path]" as any,
+                    params: { path: newPath, fileId: fileOrFolder.id, isFolder: `${fileOrFolder.folder}` },
+                });
             } catch (err) {
                 console.error("router.push threw an error:", err);
             }
         }
     }
 
-
     function goToDocumentLibrary() {
-        if (isFavouriteView || isTrashView || path.length === 0) return;
+        if (viewType !== 'default' || !breadCrumbItems?.length) return;
         if (router.canDismiss()) {
             router.dismissAll();
         }
         router.replace("/document-library");
     }
 
-    function showFolderStructureModal(
-
-    ) {
+    function showFolderStructureModal() {
         rowRef.current?.measure((x, y, width, height, pageX, pageY) => {
             setModalPosition({ x: pageX, y: pageY + height });
         });
-
         setShowModal(true);
-
-
-
     }
 
+    function openCreateFolderModal() {
+        setFolderName('');
+        setCreateFolderModalVisible(true);
+    }
+
+    function handleCreateFolder() {
+        const trimmed = folderName.trim();
+        if (!trimmed || !user?.id) return;
+
+        const now = new Date().toISOString();
+        createFolderMutation.mutate(
+            {
+                createdBy: user.id,
+                createdOn: now,
+                daysArchived: 0,
+                name: trimmed,
+                parentId: fileIdNumber || null,
+                title: trimmed,
+                updatedBy: user.id,
+                updatedOn: now,
+            },
+            {
+                onSuccess: () => {
+                    setCreateFolderModalVisible(false);
+                    showToast(`Folder "${trimmed}" created`);
+                },
+                onError: (error: any) => {
+                    setCreateFolderModalVisible(false);
+                    showToast(error?.response?.data?.message || error?.message || 'Failed to create folder', 'error');
+                },
+            }
+        );
+    }
 
     return (<>
         <ThemedView style={styles.container}>
+            {header === "Document Library" && (
+                <UploadAction currentFolderId={fileIdNumber} onCreateFolder={openCreateFolderModal} />
+            )}
+
             <ThemedView style={styles.header}>
                 <ThemedView style={{ flexDirection: 'row', flex: 12, flexWrap: 'wrap', flexShrink: 1, paddingRight: 40 }}>
                     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} >
-
                         <Pressable ref={rowRef} onPress={() => {
-                            path.length > 0 ?
+                            breadCrumbItems?.length ?
                                 showFolderStructureModal()
                                 :
                                 goToDocumentLibrary();
                         }}>
-                            <ThemedText numberOfLines={1} ellipsizeMode="head" type={breadCrumb.length == 0 ? 'mediumBold' : 'medium'} >
-                                {path.length > 0 ? " ...... " : header}
+                            <ThemedText numberOfLines={1} ellipsizeMode="head" type={!breadCrumbItems?.length ? 'mediumBold' : 'medium'} >
+                                {breadCrumbItems?.length ? " ...... " : header}
                             </ThemedText>
                         </Pressable>
-
-                        <ThemedText type='mediumBold'>
-                            <ThemedText type='medium'>
-                                {breadCrumb.length > 0 ? " > " : ""}
-                            </ThemedText> {breadCrumb[breadCrumb.length - 1]} </ThemedText>
+                        {breadCrumb.length > 0 && <ThemedText type='mediumBold'>
+                            <ThemedText type='medium'>{' > '}</ThemedText> {breadCrumb[breadCrumb.length - 1]}
+                        </ThemedText>}
                     </ScrollView>
-
                 </ThemedView>
                 <Pressable onPress={() => toggleView()} style={{ flex: 1, alignItems: "flex-end" }}>
                     <Ionicons name={isGridView ? "grid-outline" : "list-outline"} color={theme.theme.text} size={20} />
                 </Pressable>
             </ThemedView>
-            <FlatFileList files={files} isGridView={isGridView} goToFolder={goToFolder} isRecentDocumentsView={isRecentDocumentsView} isTrashView={isTrashView} isFavouriteView={isFavouriteView} />
+            <FlatFileList files={files} isGridView={isGridView} goToFolder={goToFolder} viewType={viewType} />
         </ThemedView>
+
+        
 
         <Modal
             visible={isShowModal}
@@ -155,13 +184,16 @@ export default function FilesView({ fileId, path, header, isFolder, isFavouriteV
                                         Document Library
                                     </ThemedText>
                                 </Pressable>
-                                {breadCrumb.map((item, index) => (
-                                    <View style={{ "width": "100%", padding: 4 }} key={index}>
+                                {isHierarchyLoading && !!fileIdNumber ? (
+                                    <ActivityIndicator size="small" style={{ marginTop: 8 }} />
+                                ) : breadCrumbItems?.map((hierarchyItem, index) => (
+                                    <View style={{ "width": "100%", padding: 4 }} key={hierarchyItem.id ?? index}>
 
-                                        <Pressable key={index} onPress={() => {
+                                        <Pressable onPress={() => {
+                                            if (index === breadCrumbItems.length - 1) return;
                                             setShowModal(false);
-                                            const file = visibleFiles.find((f) => f.name === item);
-                                            goToFolder(file!, breadCrumb.slice(0, index + 1));
+                                            const newPath = breadCrumbItems.slice(0, index + 1).map((h) => h.name);
+                                            goToFolder(hierarchyItem, newPath);
                                         }}>
                                             <View style={{ flexDirection: "row", alignItems: "center", borderColor: "white", width: "100%" }}>
                                                 <View style={{ transform: [{ rotate: "270deg" }], alignItems: "center", justifyContent: "center" }}>
@@ -175,7 +207,7 @@ export default function FilesView({ fileId, path, header, isFolder, isFavouriteV
                                                 <View>
 
                                                     <ThemedText
-                                                        type={breadCrumb.length - 1 == index ? 'mediumBold' : 'medium'}
+                                                        type={breadCrumbItems.length - 1 == index ? 'mediumBold' : 'medium'}
                                                         style={{
                                                             color: theme.theme.text,
                                                             backgroundColor: theme.theme.background,
@@ -183,7 +215,7 @@ export default function FilesView({ fileId, path, header, isFolder, isFavouriteV
                                                             marginLeft: (index + 1) * 16,
                                                         }}
                                                     >
-                                                        {item}
+                                                        {hierarchyItem.name}
                                                     </ThemedText>
                                                 </View>
 
@@ -204,9 +236,104 @@ export default function FilesView({ fileId, path, header, isFolder, isFavouriteV
 
 
         </Modal>
+
+        <Modal
+            visible={isCreateFolderModalVisible}
+            transparent
+            animationType="fade"
+            statusBarTranslucent
+            onRequestClose={() => setCreateFolderModalVisible(false)}
+        >
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#00000060' }}
+            >
+                <Pressable
+                    style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }}
+                    onPress={() => setCreateFolderModalVisible(false)}
+                >
+                    <Pressable onPress={() => {}}>
+                        <ThemedView
+                            style={{
+                                width: 320,
+                                borderRadius: 16,
+                                padding: 28,
+                                gap: 24,
+                            }}
+                        >
+                            <ThemedText type="mediumBold" style={{ textAlign: 'center' }}>
+                                New Folder
+                            </ThemedText>
+
+                            <ThemedTextInput
+                                placeholder="Folder name"
+                                value={folderName}
+                                onChangeText={setFolderName}
+                                autoFocus
+                                maxLength={254}
+                                onSubmitEditing={handleCreateFolder}
+                                returnKeyType="done"
+                                style={{
+                                    borderRadius: 10,
+                                    padding: 14,
+                                    fontSize: 15,
+                                }}
+                            />
+
+                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10 }}>
+                                <Pressable
+                                    onPress={() => setCreateFolderModalVisible(false)}
+                                    style={{
+                                        paddingVertical: 10,
+                                        paddingHorizontal: 20,
+                                        borderRadius: 8,
+                                    }}
+                                >
+                                    <ThemedText type="medium" style={{ color: theme.theme.text + '99' }}>Cancel</ThemedText>
+                                </Pressable>
+
+                                <Pressable
+                                    onPress={handleCreateFolder}
+                                    disabled={createFolderMutation.isPending || !folderName.trim()}
+                                    style={{
+                                        paddingVertical: 10,
+                                        paddingHorizontal: 22,
+                                        backgroundColor: createFolderMutation.isPending || !folderName.trim() ? theme.theme.text + '20' : theme.theme.primary,
+                                        borderRadius: 8,
+                                        minWidth: 72,
+                                        alignItems: 'center',
+                                    }}
+                                >
+                                    {createFolderMutation.isPending ? (
+                                        <ActivityIndicator size="small" color="white" />
+                                    ) : (
+                                        <ThemedText type="mediumBold" style={{ color: 'white' }}>Create</ThemedText>
+                                    )}
+                                </Pressable>
+                            </View>
+                        </ThemedView>
+                    </Pressable>
+                </Pressable>
+            </KeyboardAvoidingView>
+        </Modal>
+        {toastMessage ? (
+            <ThemedView
+                style={{
+                    position: 'absolute',
+                    bottom: 20,
+                    left: 24,
+                    right: 24,
+                    padding: 14,
+                    borderRadius: 10,
+                    alignItems: 'center',
+                    zIndex: 2000,
+                    backgroundColor: toastType === 'error' ? theme.theme.onError : theme.theme.onSuccess,
+                }}
+            >
+                <ThemedText type="smallBold" style={{ color: 'white' }}>{toastMessage}</ThemedText>
+            </ThemedView>
+        ) : null}
     </>
-
-
     );
 }
 

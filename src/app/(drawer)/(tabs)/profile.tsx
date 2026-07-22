@@ -1,7 +1,9 @@
 import { ThemedText } from '@/components/themed-text';
 import ThemedTextInput from '@/components/themed-text-input';
 import { ThemedView } from '@/components/themed-view';
+import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-provider';
+import { useCurrentUser } from '@/hooks/queries/use-user';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -10,6 +12,9 @@ import { ScrollView } from 'react-native-gesture-handler';
 
 export default function Profile() {
     const theme = useTheme();
+    const {username} = useAuth();
+    const { data: user, isLoading } = useCurrentUser(username);
+
     const [isShowModal, setIsShowModal] = useState(false);
     const [image, setImage] = useState<string | null>(null);
 
@@ -21,7 +26,6 @@ export default function Profile() {
             aspect: [4, 4],
             quality: 1,
         });
-        console.log(result);
 
         if (!result.canceled) {
             setImage(result.assets[0].uri);
@@ -39,7 +43,7 @@ export default function Profile() {
                 }}>
                     <View style={styles.content}>
                         <View>
-                            <Image style={styles.profileImage} source={{ uri: image ? image : "https://picsum.photos/seed/696/3000/2000" }}></Image>
+                            <Image style={styles.profileImage} source={{ uri: user?.profilePhoto ? `data:image/png;base64,${user?.profilePhoto}`: "https://picsum.photos/seed/696/3000/2000" }}></Image>
                             <Pressable
                                 style={[
                                     styles.iconStyle,
@@ -55,17 +59,17 @@ export default function Profile() {
                         </View>
                         <View style={styles.nameAndEmail}>
 
-                            <ThemedText style={styles.name} type={'largeBold'}>Irfan Nasim</ThemedText>
-                            <ThemedText style={styles.email} type={'medium'}>irfan.nasim@example.com</ThemedText>
+                            <ThemedText style={styles.name} type={'largeBold'}>{user?.name || "User"}</ThemedText>
+                            <ThemedText style={styles.email} type={'medium'}>{user?.email || "user@example.com"}</ThemedText>
                         </View>
 
                         <ThemedView style={[styles.profileFields, { backgroundColor: theme.theme.backgroundElement  }]}>
-                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Group Name" itemValue="Management" />
-                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Username" itemValue="irfan.nasim" />
-                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Mobile Number" itemValue="" />
-                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Status" itemValue="Active" />
-                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Address" itemValue="123 Main St, Anytown, USA" />
-                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Member Since" itemValue="January 2022" />
+                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Group Name" itemValue={user?.groupName || "N/A"} />
+                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Username" itemValue={user?.username || "N/A"} />
+                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Mobile Number" itemValue={user?.mobileNumber || "N/A"} />
+                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Status" itemValue={user?.status || "N/A"} />
+                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Address" itemValue={user?.address || "N/A"} />
+                            <ProfileItem style={{ borderColor: theme.theme.text + "40" }} itemKey="Member Since" itemValue={new Date(user?.createdOn!).toLocaleDateString() || "N/A"} />
                         </ThemedView>
 
                         <Pressable style={[{ backgroundColor: theme.theme.primary, alignSelf: "flex-end", padding: 10, marginTop: 10 }]} onPress={() => setIsShowModal(true)}>
@@ -103,7 +107,7 @@ export default function Profile() {
                         <View style={{ flexDirection: 'row', alignContent: "flex-end", justifyContent: "flex-end", width: "100%", gap: 10, marginTop: 10 }}>
 
                            
-                            <ChangePasswordModalOptions style={{ backgroundColor: theme.theme.primary }} title="Update" onPress={() => setIsShowModal(false)} />
+                        <ChangePasswordModalOptions style={{ backgroundColor: theme.theme.primary }} title="Update" onPress={() => setIsShowModal(false)} />
                         </View>
 
 

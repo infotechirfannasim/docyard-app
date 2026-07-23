@@ -6,7 +6,6 @@ import { useCurrentUser } from '@/hooks/queries/use-user';
 import { FolderUploadDto, MetaDataAttributeDto } from '@/types/api/file-dto';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { File, Paths } from 'expo-file-system';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
@@ -102,6 +101,8 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
         if (!selectedFolder || !user?.id) return;
         const userId = user.id;
 
+        setUploadProgress('Starting...');
+
         const metaJson: Record<string, string> = {};
         attributes.forEach((attr) => {
             metaJson[attr.name] = attributeValues[attr.name]?.trim() || '';
@@ -134,7 +135,9 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                 }
 
                 await processSafEntry(selectedFolder.uri, rootFolderId, metaJson, userId);
-                onClose();
+                    setToastMessage(`Files uploaded to "${selectedFolder.name}"`);
+                    setToastType('success');
+                    onClose();
             },
             onError: (error: any) => {
                 setToastMessage(error?.response?.data?.message || error?.message || 'Failed to create folder');
@@ -204,30 +207,25 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                 };
                 const fileMime = mimeFallback[ext] || 'application/octet-stream';
 
-                const fileFormData = new FormData();
-                const reqObjFile = new File(Paths.cache, 'reqObj.json');
-                await reqObjFile.write(JSON.stringify({
-                    createdBy: uid,
-                    updatedBy: uid,
-                    ownerId: uid,
-                    folderId: parentFolderId,
-                    metaJson: JSON.stringify(metaJson),
-                    templateId: selectedTemplateId ?? 1,
-                }));
-                fileFormData.append('reqObj', {
-                    uri: reqObjFile.uri,
-                    type: 'application/json',
-                    name: 'reqObj.json',
-                } as any);
-                fileFormData.append('doc', {
-                    uri: entryUri,
-                    type: fileMime,
-                    name: entryName,
-                } as any);
-
                 await new Promise<void>((resolve, reject) => {
                     uploadFileMutation.mutate(
-                        { formData: fileFormData, activity: false, onProgress: (pct) => setFilePercent(pct) },
+                        {
+                          fileUri: entryUri,
+                          fileName: entryName,
+                          fileType: fileMime,
+                          reqObj: {
+                            createdBy: uid,
+                            updatedBy: uid,
+                            ownerId: uid,
+                            folderId: parentFolderId,
+                            metaJson: JSON.stringify(metaJson),
+                            templateId: selectedTemplateId ?? 1,
+                            name: entryName,
+                            title: entryName,
+                          },
+                          activity: false,
+                          onProgress: (pct) => setFilePercent(pct),
+                        },
                         { onSuccess: () => resolve(), onError: (err: any) => reject(err) }
                     );
                 });

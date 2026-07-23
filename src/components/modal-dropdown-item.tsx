@@ -19,7 +19,7 @@ export default function ModelDropDownItem({ itemKey, onPress, iconName, text, th
         return <Pressable
         key={itemKey}
             onPress={onPress }
-            style={{ padding: 10 }}
+            style={{ padding: 10, paddingRight: 20 , borderBottomWidth: 0.4, borderBottomColor: theme.theme.text + "20" }}
             android_ripple={{ color: theme.theme.text + "20" }}
         ><View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
 

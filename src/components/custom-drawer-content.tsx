@@ -9,7 +9,8 @@ import {
     DrawerContentScrollView,
     DrawerItemList,
 } from "expo-router/drawer";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import SkeletonLoading from 'expo-skeleton-loading';
+import { Pressable, View } from "react-native";
 import { ThemedText } from "./themed-text";
 
 function formatBytes(bytes: number): string {
@@ -62,13 +63,20 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 
             {/* Storage Info */}
             {isLoading ? (
-                <View style={{ padding: 20, alignItems: 'center' }}>
-                    <ActivityIndicator size="small" color={theme.theme.drawerActiveTintColor} />
-                </View>
+                <SkeletonLoading background={theme.theme.drawerActiveTintColor + "20"} highlight={theme.theme.drawerActiveTintColor + "50"}>
+                    <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 4, marginBottom: 10 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                            <View style={{ width: '25%', height: 12, backgroundColor: '#000', borderRadius: 4 }} />
+                            <View style={{ width: '35%', height: 12, backgroundColor: '#000', borderRadius: 4 }} />
+                        </View>
+                        <View style={{ height: 4, borderRadius: 2, backgroundColor: '#000' }} />
+                        <View style={{ width: '20%', height: 10, marginTop: 2, backgroundColor: '#000', borderRadius: 4 }} />
+                    </View>
+                </SkeletonLoading>
             ) : dashboardStats ? (
                 <View style={{ backgroundColor: theme.theme.drawerActiveTintColor + '15', paddingHorizontal: 20, paddingVertical: 12, gap: 4, marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <ThemedText type="extraSmall" style={{ color: theme.theme.drawerActiveTintColor }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                        <ThemedText  type="extraSmall" style={{ color: theme.theme.drawerActiveTintColor, letterSpacing: 0.8 }}>
                             Storage
                         </ThemedText>
                         <ThemedText type="extraSmall" style={{ color: theme.theme.drawerActiveTintColor + 'AA' }}>

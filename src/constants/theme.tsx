@@ -7,7 +7,7 @@ export const Colors = {
     backgroundElement: '#fbfeff',
     backgroundSelected: '#f6f6f6',
     textSecondary: '#60646C',
-    progressIndicator: "#00000042",
+    progressIndicator: "#00000032",
     completedProgressIndicator: "#ffffffdd",
     drawerBackground: "#00629a",
     drawerActiveTintColor: "#7fdbff",
@@ -19,9 +19,9 @@ export const Colors = {
     cardItemGridColor: '#f9fdff',
     modalDropDownIconColor: "#417689",
     onSuccess: "#00d000",
-
     onError: "#f20000",
-
+    skeleton: '#00000030',
+    skeletonHighlight: '#00000060',
   },
   dark: {
     text: '#dedede',
@@ -31,7 +31,7 @@ export const Colors = {
     backgroundElement: '#161616',
     backgroundSelected: '#202124',
     textSecondary: '#B0B4BA',
-    progressIndicator: "#00000042",
+    progressIndicator: "#00000032",
     completedProgressIndicator: "#ffffffdd",
     drawerBackground: "#141414",
     drawerActiveTintColor: "#00a5e6",
@@ -44,8 +44,8 @@ export const Colors = {
     modalDropDownIconColor: '#005371',
     onSuccess: "#00ae00",
     onError: "#a90000",
-
-
+    skeleton: '#dedede30',
+    skeletonHighlight: '#dedede60',
   },
 } as const;
 

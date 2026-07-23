@@ -1,8 +1,9 @@
 import { ThemeContextType } from "@/context/theme-provider";
 import { FileLogsDto } from "@/types/api/file-dto";
-import { ActivityIndicator, Modal, Pressable, ScrollView, View } from "react-native";
+import { Modal, Pressable, ScrollView, View } from "react-native";
 import { ThemedText } from "./themed-text";
 import { ThemedView } from "./themed-view";
+import SkeletonLoading from 'expo-skeleton-loading';
 
 type FileLogsModalProps = {
     visible: boolean;
@@ -37,7 +38,15 @@ export function FileLogsModal({ visible, logs, isLoading, fileTitle, theme, onCl
                     <View style={{ height: 1, backgroundColor: theme.theme.text + '15' }} />
 
                     {isLoading ? (
-                        <ActivityIndicator size="small" style={{ padding: 20 }} />
+                        <SkeletonLoading background={theme.theme.skeleton} highlight={theme.theme.skeletonHighlight}>
+                            <View style={{ paddingVertical: 10, gap: 4 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                    <View style={{ height: 10, width: '40%', borderRadius: 4, backgroundColor: theme.theme.skeleton }} />
+                                    <View style={{ height: 10, width: '20%', borderRadius: 4, backgroundColor: theme.theme.skeleton }} />
+                                </View>
+                                <View style={{ height: 8, width: '30%', borderRadius: 4, backgroundColor: theme.theme.skeleton }} />
+                            </View>
+                        </SkeletonLoading>
                     ) : !logs || logs.length === 0 ? (
                         <ThemedText type="small" style={{ textAlign: 'center', color: theme.theme.text + '80', padding: 20 }}>
                             No logs found

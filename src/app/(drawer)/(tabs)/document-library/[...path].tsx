@@ -1,8 +1,8 @@
 import FilesView from '@/components/files-view';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth-context';
-import { useGetFilesData } from '@/hooks/queries/use-get-files-data.tsx';
 import { useTypeFiles } from '@/hooks/queries/use-files';
+import { useGetFilesData } from '@/hooks/queries/use-get-files-data.tsx';
 import { useCurrentUser } from '@/hooks/queries/use-user';
 import { useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator } from 'react-native';
@@ -29,7 +29,7 @@ const { files: filesData, isFilesLoading, user, isUserLoading } = useGetFilesDat
         <ActivityIndicator size="large"  />
       </ThemedView>
     ) : 
-  <FilesView header="Document Library" files={filesData!} fileId={Number(fileId)} isFolder={isFolder === "true"} />
+  <FilesView header="Document Library" files={filesData!} fileId={Number(fileId)} isFolder={isFolder === "true"} viewType='document-library'/>
   );
 }
 
@@ -44,7 +44,7 @@ function TypeFilesView({ typeParam }: { typeParam: "Image" | "video" | "doc" | "
         <ActivityIndicator size="large" />
       </ThemedView>
     ) : (
-        <FilesView header={typeHeaderMap[typeParam]} files={typeFiles!} isFolder={false} />
+        <FilesView header={typeHeaderMap[typeParam]} files={typeFiles!} isFolder={false} viewType="document-library"/>
     )
   );
 }

@@ -53,7 +53,7 @@ export function FileListItemGrid({ file, index, month, day, year, theme, onLongP
 
 
         <View style={{ flexDirection: "column", height: 80, justifyContent: "center", flex: 1, flexShrink: 1, marginRight: 4 }}>
-          <ThemedText numberOfLines={2} type={"extraSmallBold"}>{file.name} </ThemedText>
+          <ThemedText numberOfLines={2} type={"extraSmallBold"}>{file.name}</ThemedText>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 4, marginTop: 8 }}>
             <View style={{ flexShrink: 1}}>
 

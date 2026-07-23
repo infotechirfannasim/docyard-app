@@ -1,5 +1,16 @@
 import { CopyFileDto, CreateFileDto, FileDto, FileLogsDto, FolderUploadDto, MetaDataTemplateDto, MetaDataTemplateListDto, MoveFileDto, RenameFileDto } from "@/types/api/file-dto";
 import { apiClient } from "../client";
+import * as SecureStore from 'expo-secure-store';
+import { AUTH_TOKEN_KEY } from "@/constants/constant-variables";
+
+export type RNFSUploadParams = {
+  fileUri: string;
+  fileName: string;
+  fileType: string;
+  reqObj: Record<string, any>;
+  activity?: boolean;
+  onProgress?: (pct: number) => void;
+};
 
 
 
@@ -166,7 +177,48 @@ export async function uploadFile(formData: FormData, activity?: boolean, onProgr
       if (e.total) onProgress?.(Math.round((e.loaded * 100) / e.total));
     },
   });
+  console.log('Upload response:', JSON.stringify(data, null, 2));
   return data;
+}
+
+export async function uploadFileRNFS(params: RNFSUploadParams): Promise<any> {
+  const { fileUri, fileName, fileType, reqObj, activity, onProgress } = params;
+  const queryParams = activity !== undefined ? `?activity=${activity}` : '';
+
+  // Use safe name (underscores instead of spaces) to avoid RN FormData encoding
+  const safeName = fileName.replace(/ /g, '_');
+
+  // Stream-copy to cache with safe name
+  const expoFs = require('expo-file-system');
+  const FsFile = expoFs.File;
+  const Paths = expoFs.Paths;
+  const sourceFile = new FsFile(fileUri);
+  const cachedFile = new FsFile(Paths.cache, safeName);
+  try {
+    const src = sourceFile.readableStream();
+    const dest = cachedFile.writableStream();
+    await src.pipeTo(dest);
+  } catch {
+    // fall through, use original URI
+  }
+
+  const fileFormData = new FormData();
+
+  const reqObjFile = new FsFile(Paths.cache, 'reqObj.json');
+  await reqObjFile.write(JSON.stringify(reqObj));
+  fileFormData.append('reqObj', {
+    uri: reqObjFile.uri,
+    type: 'application/json',
+    name: 'reqObj.json',
+  } as any);
+
+  fileFormData.append('doc', {
+    uri: cachedFile.uri,
+    type: fileType,
+    name: safeName,
+  } as any);
+
+  return uploadFile(fileFormData, activity, onProgress);
 }
 
 export async function uploadFolder(payload: FolderUploadDto): Promise<any> {

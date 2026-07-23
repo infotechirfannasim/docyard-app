@@ -43,6 +43,7 @@ export function useGetFilesData(
   return {
     files: active?.data ?? [],
     isFilesLoading: active?.isLoading ?? false,
+    isFilesPending: active?.isPending ?? true,
     user,
     isUserLoading,
   };

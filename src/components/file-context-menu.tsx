@@ -1,4 +1,5 @@
 import { ThemeContextType } from "@/context/theme-provider";
+import { ScrollViewIndicator } from "@fanchenbao/react-native-scroll-indicator";
 import { Modal, Pressable, View } from "react-native";
 import ModelDropDownItem, { ModelDropDownItemProps } from "./modal-dropdown-item";
 
@@ -31,22 +32,24 @@ export function FileContextMenu({ visible, position, flipped, screenHeight, menu
                         right: position.x,
                         backgroundColor: theme.theme.background,
                         borderColor: theme.theme.text + "20",
-                        paddingVertical: 2,
                         minWidth: 140,
                         elevation: 6,
+                         maxHeight: 260
                     }}
                 >
-                    {menuItems.map((menuItem) => (
-                        <ModelDropDownItem
-                            key={menuItem.itemKey}
-                            itemKey={menuItem.itemKey}
-                            text={menuItem.text}
-                            iconName={menuItem.iconName}
-                            onPress={menuItem.onPress}
-                            theme={theme}
-                            visible={menuItem.visible}
-                        />
-                    ))}
+                    <ScrollViewIndicator indStyle={{backgroundColor : theme.theme.text + "20"}} {...(menuItems.length > 5 ? {scrollIndicatorContainerStyle: {height: 200}} : {})}>
+                        {menuItems.map((menuItem) => (
+                            <ModelDropDownItem
+                                key={menuItem.itemKey}
+                                itemKey={menuItem.itemKey}
+                                text={menuItem.text}
+                                iconName={menuItem.iconName}
+                                onPress={menuItem.onPress}
+                                theme={theme}
+                                visible={menuItem.visible}
+                            />
+                        ))}
+                    </ScrollViewIndicator>
                 </View>
             </Pressable>
         </Modal>

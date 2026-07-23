@@ -174,8 +174,8 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                     gap: 8,
                     paddingHorizontal: 10,
                     paddingVertical: 8,
-                    borderRadius: 10,
-                    borderWidth: 1,
+                    borderRadius: 1,
+                    borderWidth: 1.5,
                     borderColor: theme.theme.text + '20',
                     marginBottom: 12,
                 }}>

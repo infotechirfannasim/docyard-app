@@ -20,7 +20,7 @@ import { ModelDropDownItemProps } from "./modal-dropdown-item";
 import { RenameModal } from "./rename-modal";
 import { TrashFab } from "./trash-fab";
 
-type ViewType = 'default' | 'favourite' | 'recent' | 'trash' | 'shared-by-me' | 'shared-with-me'| 'archival';
+type ViewType = 'default' | 'favourite' | 'recent' | 'trash' | 'shared-by-me' | 'shared-with-me' | 'archival' | 'document-library';
 
 export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewType = 'default' }:
     {
@@ -36,6 +36,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
     const isSharedByMeView = viewType === 'shared-by-me';
     const isSharedWithMeView = viewType === 'shared-with-me';
     const isArchivalView = viewType === 'archival';
+    const isDocumentLibraryView = viewType === 'document-library';
     const theme = useTheme();
     const deleteFileMutation = useDeleteFile();
     const restoreArchivedFilesMutation = useArchivedRestoreFiles();
@@ -115,7 +116,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "open-location",
             iconName: "folder-open-outline",
             text: (isRecentDocumentsView || isFavouriteView) && !selectedFile?.folder ? "Open file location" : "Open",
-            visible: ((isRecentDocumentsView || isFavouriteView) && !selectedFile?.folder && !isTrashView),
+            visible: isRecentDocumentsView,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -129,10 +130,18 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             },
         },
         {
+            itemKey: "share",
+            iconName: "share-outline",
+            text: "Share",
+            visible: isFavouriteView || isRecentDocumentsView || isDocumentLibraryView || isSharedByMeView || isArchivalView,
+            theme: theme,
+            onPress: () => setMenuVisible(false),
+        },
+        {
             itemKey: "copy",
             iconName: "copy-outline",
             text: "Copy",
-            visible: (!isTrashView && !isArchivalView),
+            visible: isDocumentLibraryView,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -146,7 +155,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "move",
             iconName: "move-outline",
             text: "Move",
-            visible: !isRecentDocumentsView && !isTrashView && !isArchivalView,
+            visible: isDocumentLibraryView,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -157,34 +166,28 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             },
         },
         {
-            itemKey: "favourite",
-            iconName: selectedFile?.favourite ? "star" : "star-outline",
-            text: selectedFile?.favourite ? "Unfavourite" : "Favourite",
-            visible: !isTrashView && !isArchivalView,
-            theme: theme,
-            onPress: updateFavourite,
-        },
-        {
-            itemKey: "share",
-            iconName: "share-outline",
-            text: "Share",
-            visible: !isTrashView && !isArchivalView,
-            theme: theme,
-            onPress: () => setMenuVisible(false),
-        },
-        {
             itemKey: "download",
             iconName: "download-outline",
             text: "Download",
-            visible: !isTrashView && !isArchivalView,
+            visible: isRecentDocumentsView || isDocumentLibraryView || isArchivalView || isFavouriteView,
             theme: theme,
             onPress: () => setMenuVisible(false),
         },
+        {
+            itemKey: "favourite",
+            iconName: selectedFile?.favourite ? "star" : "star-outline",
+            text: selectedFile?.favourite ? "Unfavourite" : "Favourite",
+            visible: isFavouriteView || isDocumentLibraryView || isArchivalView,
+            theme: theme,
+            onPress: updateFavourite,
+        },
+
+
         {
             itemKey: "rename",
             iconName: "create-outline",
             text: "Rename",
-            visible: !isTrashView && !isArchivalView,
+            visible: isDocumentLibraryView || isRecentDocumentsView,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -197,7 +200,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "archive",
             iconName: "archive-outline",
             text: "Archive",
-            visible: !isRecentDocumentsView && !isTrashView && !isArchivalView,
+            visible: isDocumentLibraryView,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -214,7 +217,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "view-logs",
             iconName: "reader-outline",
             text: "View Logs",
-            visible: !isRecentDocumentsView && !isTrashView && !isArchivalView,
+            visible: isDocumentLibraryView || isSharedByMeView || isSharedWithMeView,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -224,11 +227,34 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
                 setLogsModalVisible(true);
             },
         },
+
+        {
+            itemKey: "Check In",
+            iconName: "checkmark-circle-outline",
+            text: "Check In",
+            visible: isDocumentLibraryView,
+            theme: theme,
+            onPress: () => {
+                setMenuVisible(false);
+
+            },
+        },
+         {
+            itemKey: "Versions",
+            iconName: "layers-outline",
+            text: "Versions",
+            visible: isDocumentLibraryView,
+            theme: theme,
+            onPress: () => {
+                setMenuVisible(false);
+
+            },
+        },
         {
             itemKey: "delete",
             iconName: "trash-outline",
             text: "Delete",
-            visible: !isTrashView,
+            visible: isRecentDocumentsView || isDocumentLibraryView || isArchivalView,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -265,7 +291,34 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
                 if (!fileId || !fileName) return;
                 setConfirmAction({ type: 'restore', fileId, fileName });
             },
+        },
+        
+       
+        {
+            itemKey: "Automate",
+            iconName: "settings-outline",
+            text: "Automate",
+            visible: isDocumentLibraryView || isFavouriteView,
+            theme: theme,
+            onPress: () => {
+                setMenuVisible(false);
+
+            },
+        },
+        {
+            itemKey: "Workflow",
+            iconName: "git-branch-outline",
+            text: "Workflow",
+            visible: isDocumentLibraryView || isFavouriteView,
+            theme: theme,
+            onPress: () => {
+                setMenuVisible(false);
+
+            },
         }
+
+
+
     ]
     return <>
 

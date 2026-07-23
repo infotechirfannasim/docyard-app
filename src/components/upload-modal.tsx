@@ -6,7 +6,6 @@ import { MetaDataAttributeDto } from '@/types/api/file-dto';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import { File, Paths } from 'expo-file-system';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { AnimatedToast } from './animated-toast';
@@ -87,6 +86,8 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
             metaJson[attr.name] = attributeValues[attr.name]?.trim() || '';
         });
 
+        const decodedName = decodeURIComponent(selectedFile.name);
+
         const reqObj = {
             createdBy: user.id,
             updatedBy: user.id,
@@ -94,6 +95,8 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
             folderId: currentFolderId && !isNaN(currentFolderId) ? currentFolderId : 0,
             metaJson: JSON.stringify(metaJson),
             templateId: selectedTemplateId ?? 1,
+            name: decodedName,
+            title: decodedName,
         };
 
         console.log('Upload reqObj:', JSON.stringify(reqObj, null, 2));
@@ -112,24 +115,20 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
         };
         const fileMime = selectedFile.mimeType || mimeFallback[ext ?? ''] || 'application/octet-stream';
 
-        const formData = new FormData();
-        const reqObjFile = new File(Paths.cache, 'reqObj.json');
-        await reqObjFile.write(JSON.stringify(reqObj));
-        formData.append('reqObj', {
-            uri: reqObjFile.uri,
-            type: 'application/json',
-            name: 'reqObj.json',
-        } as any);
-        formData.append('doc', {
-            uri: selectedFile.uri,
-            type: fileMime,
-            name: selectedFile.name,
-        } as any);
-
+        setUploadPercent(2);
         uploadMutation.mutate(
-            { formData, onProgress: (pct) => setUploadPercent(pct) },
+            {
+              fileUri: selectedFile.uri,
+              fileName: decodedName,
+              fileType: fileMime,
+              reqObj,
+              activity: undefined,
+              onProgress: (pct) => setUploadPercent(pct),
+            },
             {
                 onSuccess: () => {
+                    setToastMessage(`"${decodedName}" uploaded`);
+                    setToastType('success');
                     onClose();
                 },
                 onError: (error: any) => {

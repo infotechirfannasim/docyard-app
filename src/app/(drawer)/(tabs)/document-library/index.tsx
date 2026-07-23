@@ -15,6 +15,6 @@ export default function DocumentLibraryRoot() {
         <ActivityIndicator size="large" />
       </ThemedView>
     ) :
-      <FilesView header="Document Library" files={filesData!} fileId={Number(fileId)} isFolder={isFolder === "true"} />
+      <FilesView header="Document Library" files={filesData!} fileId={Number(fileId)} isFolder={isFolder === "true"}  viewType='document-library'/>
   );
 }

@@ -1,4 +1,4 @@
-import { archivalFile, archiveFile, copyFile, createFolder, fetchArchivalFiles, fetchFavouriteFiles, fetchFileLogs, fetchFiles, fetchHierarchy, fetchMetaData, fetchMetaDataList, fetchRecentFiles, fetchSharedByMefiles, fetchSharedWithMeFiles, fetchTrashFiles, fetchTypeFiles, moveFile, permanentDeleteFile, renameFile, restoreArchivalFiles, restoreArchivedFiles, searchFile, updateFavouriteFile, uploadFile, uploadFolder } from "@/api/endpoints/files";
+import { archivalFile, archiveFile, copyFile, createFolder, fetchArchivalFiles, fetchFavouriteFiles, fetchFileLogs, fetchFiles, fetchHierarchy, fetchMetaData, fetchMetaDataList, fetchRecentFiles, fetchSharedByMefiles, fetchSharedWithMeFiles, fetchTrashFiles, fetchTypeFiles, moveFile, permanentDeleteFile, renameFile, restoreArchivalFiles, restoreArchivedFiles, searchFile, updateFavouriteFile, uploadFile, uploadFileRNFS, uploadFolder, type RNFSUploadParams } from "@/api/endpoints/files";
 import { CopyFileDto, CreateFileDto, FolderUploadDto, MoveFileDto, RenameFileDto } from "@/types/api/file-dto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -43,7 +43,7 @@ export function useDeleteFile() {
       queryClient.invalidateQueries({ queryKey: ["recentFiles"] });
       queryClient.invalidateQueries({ queryKey: ["favouriteFiles"] });
       queryClient.invalidateQueries({ queryKey: ["archivalFiles"] });
-
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
@@ -58,6 +58,7 @@ export function useArchivalRestoreFiles() {
       queryClient.invalidateQueries({ queryKey: ["recentFiles"] });
       queryClient.invalidateQueries({ queryKey: ["favouriteFiles"] });
       queryClient.invalidateQueries({ queryKey: ["archivalFiles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
@@ -72,6 +73,7 @@ export function useArchivedRestoreFiles() {
       queryClient.invalidateQueries({ queryKey: ["recentFiles"] });
       queryClient.invalidateQueries({ queryKey: ["favouriteFiles"] });
       queryClient.invalidateQueries({ queryKey: ["archivalFiles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
@@ -103,6 +105,7 @@ export function useCopyFile() {
       queryClient.invalidateQueries({ queryKey: ["archivalFiles"] });
       queryClient.invalidateQueries({queryKey: ["sharedByMeFiles"]});
       queryClient.invalidateQueries({queryKey: ["sharedWithMeFiles"]});
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
@@ -118,10 +121,10 @@ export function useMoveFile() {
       queryClient.invalidateQueries({ queryKey: ["archivalFiles"] });
       queryClient.invalidateQueries({queryKey: ["sharedByMeFiles"]});
       queryClient.invalidateQueries({queryKey: ["sharedWithMeFiles"]});
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
-
 
 export function useRecentFiles(userId: number, enabled: boolean = true) {
   return useQuery({
@@ -148,6 +151,7 @@ export function useUpdateFavouriteFile() {
       queryClient.invalidateQueries({ queryKey: ["files"] });
       queryClient.invalidateQueries({ queryKey: ["recentFiles"] });
       queryClient.invalidateQueries({ queryKey: ["archivalFiles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
@@ -162,6 +166,7 @@ export function useRenameFile() {
       queryClient.invalidateQueries({ queryKey: ["recentFiles"] });
       queryClient.invalidateQueries({ queryKey: ["sharedByMeFiles"] });
       queryClient.invalidateQueries({ queryKey: ["sharedWithMeFiles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
@@ -229,6 +234,7 @@ export function useUpdateArchivalFile() {
       queryClient.invalidateQueries({ queryKey: ["recentFiles"] });
       queryClient.invalidateQueries({ queryKey: ["favouriteFiles"] });
       queryClient.invalidateQueries({ queryKey: ["archivalFiles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]});
     },
   });
 }
@@ -260,7 +266,12 @@ export function useSearchFile(searchKey: string, userId: number) {
 export function useUploadFile() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ formData, activity, onProgress }: { formData: FormData; activity?: boolean; onProgress?: (pct: number) => void }) => uploadFile(formData, activity, onProgress),
+    mutationFn: (params: { formData: FormData; activity?: boolean; onProgress?: (pct: number) => void } | RNFSUploadParams) => {
+      if ('fileUri' in params) {
+        return uploadFileRNFS(params);
+      }
+      return uploadFile(params.formData, params.activity, params.onProgress);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["files"] });
       queryClient.invalidateQueries({ queryKey: ["recentFiles"] });

@@ -175,3 +175,12 @@ export async function uploadFolder(payload: FolderUploadDto): Promise<any> {
   const { data } = await apiClient.post(`/dl/dl-document/folder/upload?activity=true`, payload);
   return data;
 }
+
+export async function searchFile(searchKey: string, userId: number): Promise<FileDto[]> {
+  const { data } = await apiClient.post(`/dl/dl-search/search`, {searchKey, userId});
+   // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}

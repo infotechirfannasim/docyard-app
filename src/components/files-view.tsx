@@ -6,13 +6,13 @@ import { UploadAction } from '@/components/upload-action';
 import { useAuth } from '@/context/auth-context';
 import { useLayout } from '@/context/layout-context';
 import { useTheme } from '@/context/theme-provider';
-import { useCreateFolder, useHierarchy } from '@/hooks/queries/use-files';
+import { useCreateFolder, useHierarchy, useSearchFile } from '@/hooks/queries/use-files';
 import { useCurrentUser } from '@/hooks/queries/use-user';
 import { FileDto } from '@/types/api/file-dto';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 
 type ViewType = 'default' | 'favourite' | 'recent' | 'trash' | 'shared-by-me' | 'shared-with-me' | 'archival';
@@ -46,6 +46,23 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
     const [folderName, setFolderName] = useState('');
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState<'success' | 'error'>('success');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeSearch, setActiveSearch] = useState('');
+
+    useEffect(() => {
+        setSearchQuery('');
+        setActiveSearch('');
+    }, [fileId, header]);
+
+    useEffect(() => {
+        if (!searchQuery) setActiveSearch('');
+    }, [searchQuery]);
+
+    const isRoot = header === "Document Library" && !fileId;
+    const { data: searchResults, isLoading: isSearching } = useSearchFile(activeSearch, user?.id ?? 0);
+    const searchActive = isRoot && activeSearch.length > 0;
+    const isSearchLoading = searchActive && isSearching;
+    const displayFiles = searchActive && searchResults ? searchResults : files;
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => {
         setToastMessage(message);
@@ -150,7 +167,48 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                     <Ionicons name={isGridView ? "grid-outline" : "list-outline"} color={theme.theme.text} size={20} />
                 </Pressable>
             </ThemedView>
-            <FlatFileList files={files} isGridView={isGridView} goToFolder={goToFolder} viewType={viewType} />
+            {isRoot && (
+                <ThemedView style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: theme.theme.text + '20',
+                    marginBottom: 12,
+                }}>
+                    <Pressable onPress={() => setActiveSearch(searchQuery)}>
+                        {isSearching ? (
+                            <ActivityIndicator size="small" color={theme.theme.primary} />
+                        ) : (
+                            <Ionicons name="search-outline" size={18} color={theme.theme.text + '60'} />
+                        )}
+                    </Pressable>
+                    <TextInput
+                        placeholder="Search files..."
+                        placeholderTextColor={theme.theme.text + '60'}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onSubmitEditing={() => setActiveSearch(searchQuery)}
+                        returnKeyType="search"
+                        style={{ flex: 1, paddingVertical: 4, fontSize: 14, color: theme.theme.text }}
+                    />
+                    {searchQuery ? (
+                        <Pressable onPress={() => { setSearchQuery(''); setActiveSearch(''); }}>
+                            <Ionicons name="close-circle" size={18} color={theme.theme.text + '60'} />
+                        </Pressable>
+                    ) : null}
+                </ThemedView>
+            )}
+            {isSearchLoading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color={theme.theme.primary} />
+                </View>
+            ) : (
+                <FlatFileList files={displayFiles} isGridView={isGridView} goToFolder={goToFolder} viewType={viewType} />
+            )}
         </ThemedView>
 
         

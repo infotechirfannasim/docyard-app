@@ -1,4 +1,4 @@
-import { archivalFile, archiveFile, copyFile, createFolder, fetchArchivalFiles, fetchFavouriteFiles, fetchFileLogs, fetchFiles, fetchHierarchy, fetchMetaData, fetchMetaDataList, fetchRecentFiles, fetchSharedByMefiles, fetchSharedWithMeFiles, fetchTrashFiles, fetchTypeFiles, moveFile, permanentDeleteFile, renameFile, restoreArchivalFiles, restoreArchivedFiles, updateFavouriteFile, uploadFile, uploadFolder } from "@/api/endpoints/files";
+import { archivalFile, archiveFile, copyFile, createFolder, fetchArchivalFiles, fetchFavouriteFiles, fetchFileLogs, fetchFiles, fetchHierarchy, fetchMetaData, fetchMetaDataList, fetchRecentFiles, fetchSharedByMefiles, fetchSharedWithMeFiles, fetchTrashFiles, fetchTypeFiles, moveFile, permanentDeleteFile, renameFile, restoreArchivalFiles, restoreArchivedFiles, searchFile, updateFavouriteFile, uploadFile, uploadFolder } from "@/api/endpoints/files";
 import { CopyFileDto, CreateFileDto, FolderUploadDto, MoveFileDto, RenameFileDto } from "@/types/api/file-dto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -249,6 +249,14 @@ export function useMetaDataTemplateDetail(templateId: number | null, enabled: bo
   });
 }
 
+export function useSearchFile(searchKey: string, userId: number) {
+  return useQuery({
+    queryKey: ["searchResults", searchKey],
+    queryFn: () => searchFile(searchKey, userId),
+    enabled: searchKey.length > 0 && userId > 0,
+  });
+}
+
 export function useUploadFile() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -262,7 +270,6 @@ export function useUploadFile() {
       queryClient.invalidateQueries({queryKey: ["sharedWithMeFiles"]});
       queryClient.invalidateQueries({ queryKey: ["dashboardStats"]})
       queryClient.invalidateQueries({ queryKey: ["trashFiles"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboardStats"]})
 
     },
   });

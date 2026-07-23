@@ -138,6 +138,14 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             onPress: () => setMenuVisible(false),
         },
         {
+            itemKey: "manage-access",
+            iconName: "lock-closed-outline",
+            text: "Manage Access",
+            visible: (isDocumentLibraryView || isSharedByMeView || isFavouriteView) && (selectedFile?.folder! && selectedFile?.shared!),
+            theme: theme,
+            onPress: () => setMenuVisible(false),
+        },
+        {
             itemKey: "copy",
             iconName: "copy-outline",
             text: "Copy",
@@ -169,7 +177,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "download",
             iconName: "download-outline",
             text: "Download",
-            visible: isRecentDocumentsView || isDocumentLibraryView || isArchivalView || isFavouriteView,
+            visible: isRecentDocumentsView || isDocumentLibraryView || isArchivalView || isFavouriteView || isSharedByMeView || isSharedWithMeView,
             theme: theme,
             onPress: () => setMenuVisible(false),
         },
@@ -217,7 +225,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "view-logs",
             iconName: "reader-outline",
             text: "View Logs",
-            visible: isDocumentLibraryView || isSharedByMeView || isSharedWithMeView,
+            visible: (isDocumentLibraryView || isSharedByMeView || isSharedWithMeView),
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -232,7 +240,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "Check In",
             iconName: "checkmark-circle-outline",
             text: "Check In",
-            visible: isDocumentLibraryView,
+            visible: (isDocumentLibraryView || isSharedByMeView) && !selectedFile?.folder,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -243,7 +251,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "Versions",
             iconName: "layers-outline",
             text: "Versions",
-            visible: isDocumentLibraryView,
+            visible: (isDocumentLibraryView || isSharedByMeView || isSharedWithMeView) && !selectedFile?.folder,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -298,7 +306,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "Automate",
             iconName: "settings-outline",
             text: "Automate",
-            visible: isDocumentLibraryView || isFavouriteView,
+            visible: (isDocumentLibraryView || isFavouriteView || isSharedByMeView) && !selectedFile?.folder,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);
@@ -309,7 +317,7 @@ export function FlatFileList({ files, isGridView, filesOnly, goToFolder, viewTyp
             itemKey: "Workflow",
             iconName: "git-branch-outline",
             text: "Workflow",
-            visible: isDocumentLibraryView || isFavouriteView,
+            visible: (isDocumentLibraryView || isFavouriteView || isSharedByMeView) && !selectedFile?.folder,
             theme: theme,
             onPress: () => {
                 setMenuVisible(false);

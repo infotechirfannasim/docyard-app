@@ -74,7 +74,6 @@ export async function copyFile(copyFile: CopyFileDto): Promise<FileDto[]> {
 }
 
 
-
 export async function renameFile(renameFile: RenameFileDto): Promise<FileDto[]> {
   const { data } = await apiClient.put(`/dl/dl-document/rename/`, renameFile);
   return data["data"] ?? [];
@@ -152,7 +151,6 @@ export async function fetchMetaDataList(): Promise<MetaDataTemplateListDto[]> {
   }
   return data["data"] ?? [];
 }
-
 
 export async function fetchMetaData(dataId: number): Promise<MetaDataTemplateDto[]> {
   const { data } = await apiClient.get(`/config/metadata-temp/${dataId}`);

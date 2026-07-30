@@ -2,20 +2,20 @@ import { useTheme } from '@/context/theme-provider';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
+import { FileUploadModal } from './file-upload-modal';
+import { FolderUploadModal } from './folder-upload-modal';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
-import { UploadModal } from './upload-modal';
-import { FolderUploadModal } from './folder-upload-modal';
 
 type UploadActionProps = {
     currentFolderId: number | null;
     onCreateFolder: () => void;
 };
 
-export function UploadAction({ currentFolderId, onCreateFolder }: UploadActionProps) {
+export function FabActionButton({ currentFolderId, onCreateFolder }: UploadActionProps) {
     const theme = useTheme();
     const [showMenu, setShowMenu] = useState(false);
-    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [showFileUploadModal, setShowFileUploadModal] = useState(false);
     const [showFolderUploadModal, setShowFolderUploadModal] = useState(false);
 
     return (
@@ -48,7 +48,7 @@ export function UploadAction({ currentFolderId, onCreateFolder }: UploadActionPr
                                 setShowMenu(false);
                                 onCreateFolder();
                             }}
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8 }}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 0 }}
                         >
                             <Ionicons name="folder-open-outline" size={18} color={theme.theme.text} />
                             <ThemedText type="small">Create Folder</ThemedText>
@@ -57,9 +57,9 @@ export function UploadAction({ currentFolderId, onCreateFolder }: UploadActionPr
                         <Pressable
                             onPress={() => {
                                 setShowMenu(false);
-                                setShowUploadModal(true);
+                                setShowFileUploadModal(true);
                             }}
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8 }}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 0 }}
                         >
                             <Ionicons name="cloud-upload-outline" size={18} color={theme.theme.text} />
                             <ThemedText type="small">Upload File</ThemedText>
@@ -72,7 +72,7 @@ export function UploadAction({ currentFolderId, onCreateFolder }: UploadActionPr
                                         setShowMenu(false);
                                         setShowFolderUploadModal(true);
                                     }}
-                                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8 }}
+                                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 0 }}
                                 >
                                     <Ionicons name="folder-outline" size={18} color={theme.theme.text} />
                                     <ThemedText type="small">Upload Folder</ThemedText>
@@ -85,7 +85,7 @@ export function UploadAction({ currentFolderId, onCreateFolder }: UploadActionPr
                     onPress={() => setShowMenu((prev) => !prev)}
                     style={{
                         padding: 12,
-                        borderRadius: 50,
+                        borderRadius: 12,
                         backgroundColor: theme.theme.primary,
                         elevation: 8,
                         shadowColor: '#000',
@@ -98,10 +98,10 @@ export function UploadAction({ currentFolderId, onCreateFolder }: UploadActionPr
                 </Pressable>
             </View>
 
-            <UploadModal
-                visible={showUploadModal}
+            <FileUploadModal
+                visible={showFileUploadModal}
                 currentFolderId={currentFolderId}
-                onClose={() => setShowUploadModal(false)}
+                onClose={() => setShowFileUploadModal(false)}
             />
 
             <FolderUploadModal

@@ -23,8 +23,9 @@ export default function Home() {
   const [isExpanded, setIsExpanded] = useState(false);
   const { isGridView, toggleView } = useLayout();
   // const { files: filesData, isFilesLoading, user, isUserLoading } = { files: [], isFilesLoading: true, user: { id: 0, name: "", email: "" }, isUserLoading: true } // useGetFilesData("recent");
-  const { files: filesData, isFilesPending, user, isUserLoading } = useGetFilesData("recent");
-  const { data: dashboardStats } = useDashboardStats(user?.id!);
+  const { files: filesData, isFilesPending, user, isUserLoading, error: filesError } = useGetFilesData("recent");
+  const { data: dashboardStats, error: dashboardStatsError } = useDashboardStats(user?.id!);
+
 
   const cardItems = [
     { label: "Images", stats: dashboardStats?.imageProps, type: "Image" as const },
@@ -32,48 +33,69 @@ export default function Home() {
     { label: "Documents", stats: dashboardStats?.docsProps, type: "doc" as const },
     { label: "Others", stats: dashboardStats?.othersProps, type: "other" as const },
   ];
-  const skeletonColor = '#0000007a';
+  const skeletonColor = theme.theme.skeleton;
+  const skeletonHighlight = theme.theme.skeletonHighlight;
+  console.log("Home: isFilesPending", isFilesPending, "isUserLoading", isUserLoading, "filesError", filesError, "dashboardStatsError", dashboardStatsError);
 
   const skeletonItems = useMemo(() => {
     if (isGridView) {
       return Array.from({ length: 4 }, (_, row) => (
         <View key={row} style={{ flexDirection: "row", gap: 10, width: "100%", justifyContent: 'flex-start', paddingHorizontal: "1%", marginBottom: 10 }}>
           {[0, 1].map((col) => (
-            <View key={col} style={{ flex: 1, maxWidth: "49%", height: 80, padding: 8, borderWidth: 0.2, justifyContent: "center" }}>
-              <View style={{ flexDirection: "row", justifyContent: "flex-start", alignItems: "center", flex: 1 }}>
-                <View style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: skeletonColor, marginRight: 10 }} />
-                <View style={{ flexDirection: "column", height: 80, justifyContent: "center", flex: 1, flexShrink: 1, marginRight: 4, gap: 15 }}>
-                  <View style={{ height: 8, width: '70%', backgroundColor: skeletonColor, borderRadius: 4 }} />
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 4 }}>
-                    <View style={{ height: 8, width: '30%', backgroundColor: skeletonColor, borderRadius: 4 }} />
-                    <View style={{ height: 8, width: '40%', backgroundColor: skeletonColor, borderRadius: 4 }} />
+            <View key={col} style={{ flex: 1, maxWidth: "49%", backgroundColor: theme.theme.cardItemGridColor, boxShadow: '0px 0px 2px 3px #0080ae0a' }}>
+              <SkeletonLoading background={skeletonColor} highlight={skeletonHighlight}>
+                <View>
+                  <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 10 }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: skeletonColor, marginRight: 10 }} />
+                    <View style={{ flex: 1 }}>
+                      <View style={{ height: 12, width: '80%', borderRadius: 4, backgroundColor: skeletonColor }} />
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
+                        <View style={{ height: 10, width: '30%', borderRadius: 4, backgroundColor: skeletonColor }} />
+                        <View style={{ height: 10, width: '35%', borderRadius: 4, backgroundColor: skeletonColor }} />
+                      </View>
+                    </View>
+                  </View>
+                  <View style={{ height: 0.5, backgroundColor: skeletonColor, marginHorizontal: 8 }} />
+                  <View style={{ flexDirection: "row", paddingHorizontal: 8, paddingVertical: 6, gap: 8 }}>
+                    <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeletonColor }} />
+                    <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeletonColor }} />
+                    <View style={{ width: 30, height: 14, borderRadius: 4, backgroundColor: skeletonColor }} />
                   </View>
                 </View>
-              </View>
+              </SkeletonLoading>
             </View>
           ))}
         </View>
       ));
     }
     return Array.from({ length: 8 }, (_, i) => (
-      <View key={i} style={{ paddingVertical: 10, borderBottomWidth: 0.6, borderBottomColor: theme.theme.primary + "60", flexDirection: "row", alignItems: "center", paddingHorizontal: "2%" }}>
-        <View style={{ width: 36, height: 36, borderRadius: 4, backgroundColor: skeletonColor, marginRight: 10 }} />
-        <View style={{ flex: 2 }}>
-          <View style={{ height: 10, width: '60%', backgroundColor: skeletonColor, borderRadius: 4 }} />
-        </View>
-        <View style={{ flex: 1, alignItems: "flex-end", gap: 8 }}>
-          <View style={{ height: 8, width: '60%', backgroundColor: skeletonColor, borderRadius: 4 }} />
-          <View style={{ height: 8, width: '40%', backgroundColor: skeletonColor, borderRadius: 4 }} />
-        </View>
+      <View key={i}>
+        <SkeletonLoading background={skeletonColor} highlight={skeletonHighlight}>
+          <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: theme.theme.primary + '40' }}>
+            <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: skeletonColor, marginRight: 10 }} />
+            <View style={{ flex: 1 }}>
+              <View style={{ height: 12, width: '50%', borderRadius: 4, backgroundColor: skeletonColor }} />
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+                <View style={{ height: 10, width: '20%', borderRadius: 4, backgroundColor: skeletonColor }} />
+                <View style={{ height: 10, width: '25%', borderRadius: 4, backgroundColor: skeletonColor }} />
+              </View>
+            </View>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeletonColor }} />
+              <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeletonColor }} />
+              <View style={{ width: 30, height: 14, borderRadius: 4, backgroundColor: skeletonColor }} />
+            </View>
+          </View>
+        </SkeletonLoading>
       </View>
     ));
-  }, [theme.theme.primary, isGridView]);
+  }, [theme.theme.primary, theme.theme.skeleton, isGridView]);
 
   return (
     <ThemedView style={customStyles.container}>
 
       <ThemedView style={[styles.welcomeHeader, { paddingHorizontal: ".5%" }]}>
-        <ThemedText type="large">Hello <ThemedText type="largeBold">{user?.name || "..."}, </ThemedText><ThemedText type="large"> Welcome back!</ThemedText></ThemedText>
+        {user?.name && <ThemedText type="large">Hello <ThemedText type="largeBold">{user?.name || "..."}, </ThemedText><ThemedText type="large"> Welcome back!</ThemedText></ThemedText>}
       </ThemedView>
 
       <ThemedView style={styles.headerCards}>
@@ -109,7 +131,7 @@ export default function Home() {
                   >
                     <View style={{ flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
                       <ThemedText style={{ color: "white" }} type={"mediumBold"}>{item.label}</ThemedText>
-                      <Ionicons name={cardIcons[index]} color={"#ffffffc7"} size={22} style={{ marginRight: 2 }} />
+                      <Ionicons name={cardIcons[index]} color={"#ffffffc7"} size={22} style={{ marginRight: 2, opacity: 0.8 }} />
                     </View>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", width: "100%" }}>
 
@@ -136,7 +158,6 @@ export default function Home() {
                       </View>
                     ) : (
                       <Host matchContents={false} style={{ height: 6, width: '100%' }}>
-
                         <SkeletonLoading background={"#ffffff30"} highlight={"#ffffff70"}>
                           <View style={{ width: '100%', height: 6, borderRadius: 2, backgroundColor: skeletonColor }} />
                         </SkeletonLoading>
@@ -159,11 +180,16 @@ export default function Home() {
       </ThemedView>
 
       {isFilesPending ? (
-        <SkeletonLoading background={theme.theme.text + "15"} highlight={theme.theme.text + "45"}>
-          <View>{skeletonItems}</View>
-        </SkeletonLoading>
+        <View>{skeletonItems}</View>
       ) : (
-        <FlatFileList files={filesData!} isGridView={isGridView} filesOnly={true} goToFolder={() => { }} viewType="recent" />
+        filesError ? (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+            <Ionicons name="cloud-offline-outline" size={48} color={theme.theme.danger + '80'} />
+            <ThemedText type="small" style={{ color: theme.theme.danger, textAlign: 'center', marginTop: 12 }}>{filesError?.message}</ThemedText>
+          </View>
+        ) : (
+          <FlatFileList files={filesData!} isGridView={isGridView} filesOnly={true} goToFolder={() => { }} viewType="recent" />
+        )
       )}
 
     </ThemedView>

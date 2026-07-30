@@ -49,7 +49,7 @@ export function TrashFab({ visible, files, theme, onRestoreAll, onEmptyTrash }: 
                                 setMenuVisible(false);
                                 setConfirmAction('restore-all');
                             }}
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8 }}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 0 }}
                         >
                             <Ionicons name="refresh-outline" size={18} color={theme.theme.text} />
                             <ThemedText type="small">Restore All</ThemedText>
@@ -62,7 +62,7 @@ export function TrashFab({ visible, files, theme, onRestoreAll, onEmptyTrash }: 
                                 setMenuVisible(false);
                                 setConfirmAction('empty-trash');
                             }}
-                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 8 }}
+                            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 0 }}
                         >
                             <Ionicons name="trash-outline" size={18} color="#e74c3c" />
                             <ThemedText type="small" style={{ color: '#e74c3c' }}>Empty Trash</ThemedText>
@@ -73,7 +73,7 @@ export function TrashFab({ visible, files, theme, onRestoreAll, onEmptyTrash }: 
                     onPress={() => setMenuVisible((prev) => !prev)}
                     style={{
                         padding: 12,
-                        borderRadius: 50,
+                        borderRadius: 12,
                         backgroundColor: theme.theme.primary,
                         elevation: 8,
                         shadowColor: '#000',
@@ -116,7 +116,7 @@ export function TrashFab({ visible, files, theme, onRestoreAll, onEmptyTrash }: 
                                     style={{
                                         flex: 1,
                                         paddingVertical: 11,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                         borderWidth: 1,
                                         borderColor: theme.theme.text + '20',
                                         alignItems: 'center',
@@ -138,7 +138,7 @@ export function TrashFab({ visible, files, theme, onRestoreAll, onEmptyTrash }: 
                                     style={{
                                         flex: 1,
                                         paddingVertical: 11,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                         backgroundColor: confirmAction === 'empty-trash' ? '#e74c3c' : theme.theme.primary,
                                         alignItems: 'center',
                                     }}

@@ -1,5 +1,7 @@
 import { Colors } from "@/constants/theme";
-import { createContext, ReactNode, useContext, useState } from "react";
+import { THEME_MODE_KEY } from "@/constants/constant-variables";
+import * as SecureStore from "expo-secure-store";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
 
 type ThemeMode = 'dark' | 'light';
@@ -15,11 +17,26 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({children} : {children: ReactNode})=> {
     const systemTheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-    // const systemTheme: ThemeMode = 'light';
     const [mode, setMode] = useState<ThemeMode>(systemTheme);
 
-    const toggleTheme = ()=> setMode(prev => prev === 'dark' ? 'light' : 'dark');
-    const setThemeMode = (themeMode: ThemeMode)=> setMode(themeMode);
+    useEffect(() => {
+        (async () => {
+            const saved = await SecureStore.getItemAsync(THEME_MODE_KEY);
+            if (saved !== null) {
+                setMode(saved as ThemeMode);
+            }
+        })();
+    }, []);
+
+    const toggleTheme = () => setMode(prev => {
+        const next = prev === 'dark' ? 'light' : 'dark';
+        SecureStore.setItemAsync(THEME_MODE_KEY, next);
+        return next;
+    });
+    const setThemeMode = (themeMode: ThemeMode) => {
+        setMode(themeMode);
+        SecureStore.setItemAsync(THEME_MODE_KEY, themeMode);
+    };
 
     const theme = Colors[mode];
 

@@ -51,13 +51,13 @@ export function RenameModal({ visible, initialName, isPending, theme, onClose, o
                                 maxLength={254}
                                 onSubmitEditing={() => name.trim() && onRename(name.trim())}
                                 returnKeyType="done"
-                                style={{ borderRadius: 10, padding: 14, fontSize: 15 }}
+                                style={{ borderRadius: 0, padding: 14, fontSize: 15 }}
                             />
 
                             <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 10 }}>
                                 <Pressable
                                     onPress={onClose}
-                                    style={{ paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 }}
+                                    style={{ paddingVertical: 10, paddingHorizontal: 20, borderRadius: 0 }}
                                 >
                                     <ThemedText type="medium" style={{ color: theme.theme.text + '99' }}>Cancel</ThemedText>
                                 </Pressable>
@@ -69,7 +69,7 @@ export function RenameModal({ visible, initialName, isPending, theme, onClose, o
                                         paddingVertical: 10,
                                         paddingHorizontal: 22,
                                         backgroundColor: isPending || !name.trim() ? theme.theme.text + '20' : theme.theme.primary,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                         minWidth: 72,
                                         alignItems: 'center',
                                     }}

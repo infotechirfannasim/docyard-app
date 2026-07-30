@@ -2,18 +2,17 @@
 
 import { useAuth } from "@/context/auth-context";
 import { useArchivalFiles, useFavouriteFiles, useFiles, useRecentFiles, useSharedByMeFiles, useSharedWithMeFiles, useTrashFiles } from "./use-files";
-import { useCurrentUser } from "./use-user";
 
 export function useGetFilesData(
   fileType: "recent" | "favourite" | "trash" | "document-library" | "share-by-me" | "share-to-me" | "archival",
-  fileId?: number | undefined
+  fileId?: number | undefined,
 ) {
-  const { username } = useAuth();
-  const { data: user, isLoading: isUserLoading } = useCurrentUser(username);
+  const { user, isLoading: isUserLoading } = useAuth();
+  
   const userId = user?.id;
 
   // Call every hook unconditionally, gate each with `enabled` inside the hook itself
-  const recent = useRecentFiles(userId!,  fileType === "recent" && !!userId );
+  const recent = useRecentFiles(userId!,  fileType === "recent" && !!userId,);
   const favourite = useFavouriteFiles(userId!,  fileType === "favourite" && !!userId );
   const trash = useTrashFiles(userId!,  fileType === "trash" && !!userId );
   const library = useFiles(userId!, fileId ? Number(fileId) : 0, 
@@ -42,9 +41,10 @@ export function useGetFilesData(
 
   return {
     files: active?.data ?? [],
-    isFilesLoading: active?.isLoading ?? false,
-    isFilesPending: active?.isPending ?? true,
+    isFilesLoading: (active?.isFetching ?? false) || isUserLoading,
+    isFilesPending: (active?.isFetching ?? false) || isUserLoading,
     user,
     isUserLoading,
+    error: active?.error ?? (user === null ? new Error("Could not load user. Please check your connection.") : null),
   };
 }

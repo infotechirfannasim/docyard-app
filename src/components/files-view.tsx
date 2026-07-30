@@ -1,34 +1,42 @@
-import { FlatFileList } from '@/components/flat-file-list';
+import { BatchActionFab } from '@/components/batch-action-fab';
+import { FlatFileList, FlatFileListHandle, SelectionInfo } from '@/components/flat-file-list';
 import { ThemedText } from '@/components/themed-text';
 import ThemedTextInput from '@/components/themed-text-input';
 import { ThemedView } from '@/components/themed-view';
-import { UploadAction } from '@/components/upload-action';
 import { useAuth } from '@/context/auth-context';
 import { useLayout } from '@/context/layout-context';
 import { useTheme } from '@/context/theme-provider';
+import { useToast } from '@/context/toast-context';
 import { useCreateFolder, useHierarchy, useSearchFile } from '@/hooks/queries/use-files';
-import { useCurrentUser } from '@/hooks/queries/use-user';
+
 import { FileDto } from '@/types/api/file-dto';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import SkeletonLoading from 'expo-skeleton-loading';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { FabActionButton } from './fab-action-button';
 
-type ViewType = 'default' | 'favourite' | 'recent' | 'trash' | 'shared-by-me' | 'shared-with-me' | 'archival';
+type ViewType = 'default' | 'favourite' | 'recent' | 'trash' | 'shared-by-me' | 'shared-with-me' | 'archival' | 'document-library';
 
 type FilesViewProps = {
     fileId?: number;
     files: FileDto[];
     header: "Document Library" | "Favourites" | "Trash" | "Recent Documents" | "Share By Me" | "Share To Me" | "Archival" | "Images" | "Videos" | "Documents" | "Others";
     isFolder: boolean;
+    isLoading?: boolean;
+    errorMessage?: string | null;
     viewType?: ViewType;
 };
 
-export default function FilesView({ fileId, files, header, isFolder, viewType = 'default' }: FilesViewProps) {
+export default function FilesView({ fileId, files, header, isFolder, isLoading, errorMessage, viewType = 'default' }: FilesViewProps) {
+    console.log("Rendering FilesView with props:", { fileId, files, header, isFolder, isLoading, viewType });
     const rowRef = useRef<View>(null);
+    const listRef = useRef<FlatFileListHandle>(null);
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
     const [isShowModal, setShowModal] = useState(false);
+    const [isSelectionActive, setIsSelectionActive] = useState(false);
+    const [selectionInfo, setSelectionInfo] = useState<SelectionInfo>({ active: false, selectedCount: 0, totalCount: 0, isAllSelected: false });
 
     const fileIdNumber = Number(fileId);
     const { data: hierarchy, isLoading: isHierarchyLoading } = useHierarchy(fileIdNumber, !!fileIdNumber);
@@ -39,13 +47,11 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
     const { isGridView, toggleView } = useLayout();
     const theme = useTheme();
     const createFolderMutation = useCreateFolder();
-    const { username } = useAuth();
-    const { data: user } = useCurrentUser(username);
+    const { username, user } = useAuth();
 
     const [isCreateFolderModalVisible, setCreateFolderModalVisible] = useState(false);
     const [folderName, setFolderName] = useState('');
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+    const { setToast} = useToast();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSearch, setActiveSearch] = useState('');
 
@@ -65,15 +71,8 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
     const displayFiles = searchActive && searchResults ? searchResults : files;
 
     const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-        setToastMessage(message);
-        setToastType(type);
+        setToast(message, type);
     };
-
-    useEffect(() => {
-        if (!toastMessage) return;
-        const timer = setTimeout(() => setToastMessage(''), 3000);
-        return () => clearTimeout(timer);
-    }, [toastMessage]);
 
     function goToFolder(fileOrFolder: FileDto, customPath?: string[]) {
         if (fileOrFolder.folder) {
@@ -91,7 +90,9 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
     }
 
     function goToDocumentLibrary() {
-        if (viewType !== 'default' || !breadCrumbItems?.length) return;
+        console.log("Going to Document Library, viewType:", viewType, "breadCrumbItems:", breadCrumbItems);
+        if ( (breadCrumbItems === null) && breadCrumb.length === 0) return;
+        console.log("Dismissing all modals and navigating to Document Library");
         if (router.canDismiss()) {
             router.dismissAll();
         }
@@ -139,10 +140,28 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
         );
     }
 
+    const isMultiSelectAllowed = ['document-library', 'default', 'favourite', 'archival', 'shared-with-me', 'shared-by-me', 'trash'].includes(viewType);
+
     return (<>
         <ThemedView style={styles.container}>
-            {header === "Document Library" && (
-                <UploadAction currentFolderId={fileIdNumber} onCreateFolder={openCreateFolderModal} />
+            {isSelectionActive ? (
+                <BatchActionFab
+                    selectedCount={selectionInfo.selectedCount}
+                    viewType={viewType}
+                    onCopy={() => listRef.current?.batchCopy()}
+                    onMove={() => listRef.current?.batchMove()}
+                    onDownload={() => listRef.current?.batchDownload()}
+                    onDelete={() => listRef.current?.batchDelete()}
+                    onArchive={() => listRef.current?.batchArchive()}
+                    onUnfavourite={() => listRef.current?.batchUnfavourite()}
+                    onUndoArchive={() => listRef.current?.batchUndoArchive()}
+                    onRestoreTrash={() => listRef.current?.batchRestoreTrash()}
+                    onDeletePermanent={() => listRef.current?.batchDeletePermanent()}
+                />
+            ) : (
+                header === "Document Library" ? (
+                    <FabActionButton currentFolderId={fileIdNumber} onCreateFolder={openCreateFolderModal} />
+                ) : null
             )}
 
             <ThemedView style={styles.header}>
@@ -159,13 +178,39 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                             </ThemedText>
                         </Pressable>
                         {breadCrumb.length > 0 && <ThemedText type='mediumBold'>
-                            <ThemedText type='medium'>{' > '}</ThemedText> {breadCrumb[breadCrumb.length - 1]}
+                            <ThemedText type='medium'>{' > '}</ThemedText>{breadCrumb[breadCrumb.length - 1]}
                         </ThemedText>}
                     </ScrollView>
                 </ThemedView>
-                <Pressable onPress={() => toggleView()} style={{ flex: 1, alignItems: "flex-end" }}>
-                    <Ionicons name={isGridView ? "grid-outline" : "list-outline"} color={theme.theme.text} size={20} />
-                </Pressable>
+                {!isSelectionActive && files.length != 0 && (
+                    <Pressable onPress={() => toggleView()} style={{ alignItems: "flex-end", paddingHorizontal: 4 }}>
+                        <Ionicons name={isGridView ? "grid-outline" : "list-outline"} color={theme.theme.text} size={20} />
+                    </Pressable>
+                )}
+                {isMultiSelectAllowed && selectionInfo.active && (
+                    <Pressable
+                        onPress={() => listRef.current?.toggleSelectAll()}
+                        style={{ paddingHorizontal: 4 }}
+                    >
+                        <Ionicons
+                            name={selectionInfo.isAllSelected ? 'checkbox' : 'square-outline'}
+                            size={20}
+                            color={theme.theme.primary}
+                        />
+                    </Pressable>
+                )}
+                {isMultiSelectAllowed && files.length != 0 && (
+                    <Pressable
+                        onPress={() => listRef.current?.toggleSelectionMode()}
+                        style={{ paddingHorizontal: 4 }}
+                    >
+                        <Ionicons
+                            name={isSelectionActive ? 'close-circle-outline' : 'checkmark-circle-outline'}
+                            size={20}
+                            color={isSelectionActive ? theme.theme.primary : theme.theme.text + 'AA'}
+                        />
+                    </Pressable>
+                )}
             </ThemedView>
             {isRoot && (
                 <ThemedView style={{
@@ -202,17 +247,76 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                     ) : null}
                 </ThemedView>
             )}
-            {isSearchLoading ? (
+            {errorMessage && !isLoading ? (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                    <Ionicons name="cloud-offline-outline" size={48} color={theme.theme.danger + '80'} />
+                    <ThemedText type="small" style={{ color: theme.theme.danger, textAlign: 'center', marginTop: 12 }}>{errorMessage}</ThemedText>
+                </View>
+            ) : isSearchLoading ? (
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     <ActivityIndicator size="large" color={theme.theme.primary} />
                 </View>
+            ) : isLoading ? (
+                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: isGridView ? 0 : 0, flexDirection: isGridView ? 'row' : 'column', flexWrap: isGridView ? 'wrap' : 'nowrap', justifyContent: 'space-between' }}>
+                    {Array.from({ length: 6 }).map((_, i) => {
+                        const skeleton = theme.theme.skeleton;
+                        const highlight = theme.theme.skeletonHighlight;
+                        if (isGridView) {
+                            return (
+                                <View key={i} style={{ width: '49%', marginBottom: 10, backgroundColor: theme.theme.cardItemGridColor, boxShadow: '0px 0px 2px 3px #0080ae0a' }}>
+                                    <SkeletonLoading background={skeleton} highlight={highlight}>
+                                        <View>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 10 }}>
+                                                <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: skeleton, marginRight: 10 }} />
+                                                <View style={{ flex: 1 }}>
+                                                    <View style={{ height: 12, width: '80%', borderRadius: 4, backgroundColor: skeleton }} />
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                                                        <View style={{ height: 10, width: '30%', borderRadius: 4, backgroundColor: skeleton }} />
+                                                        <View style={{ height: 10, width: '35%', borderRadius: 4, backgroundColor: skeleton }} />
+                                                    </View>
+                                                </View>
+                                            </View>
+                                            <View style={{ height: 0.5, backgroundColor: skeleton, marginHorizontal: 8 }} />
+                                            <View style={{ flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 6, gap: 8 }}>
+                                                <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeleton }} />
+                                                <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeleton }} />
+                                                <View style={{ width: 30, height: 14, borderRadius: 4, backgroundColor: skeleton }} />
+                                            </View>
+                                        </View>
+                                    </SkeletonLoading>
+                                </View>
+                            );
+                        }
+                        return (
+                            <View key={i}>
+                                <SkeletonLoading background={skeleton} highlight={highlight}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: theme.theme.primary + '40' }}>
+                                        <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: skeleton, marginRight: 10 }} />
+                                        <View style={{ flex: 1 }}>
+                                            <View style={{ height: 12, width: '50%', borderRadius: 4, backgroundColor: skeleton }} />
+                                            <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                                                <View style={{ height: 10, width: '20%', borderRadius: 4, backgroundColor: skeleton }} />
+                                                <View style={{ height: 10, width: '25%', borderRadius: 4, backgroundColor: skeleton }} />
+                                            </View>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', gap: 8 }}>
+                                            <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeleton }} />
+                                            <View style={{ width: 20, height: 14, borderRadius: 4, backgroundColor: skeleton }} />
+                                            <View style={{ width: 30, height: 14, borderRadius: 4, backgroundColor: skeleton }} />
+                                        </View>
+                                    </View>
+                                </SkeletonLoading>
+                            </View>
+                        );
+                    })}
+                </ScrollView>
             ) : (
-                <FlatFileList files={displayFiles} isGridView={isGridView} goToFolder={goToFolder} viewType={viewType} />
+                <FlatFileList ref={listRef} files={displayFiles} isGridView={isGridView} goToFolder={goToFolder} viewType={viewType} currentFolderId={fileIdNumber} onSelectionModeChange={setIsSelectionActive} onSelectionStateChange={setSelectionInfo} />
             )}
         </ThemedView>
 
         
-
+            {/* Hierarchy Modal */}
         <Modal
             visible={isShowModal}
             transparent
@@ -332,7 +436,7 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                                 onSubmitEditing={handleCreateFolder}
                                 returnKeyType="done"
                                 style={{
-                                    borderRadius: 10,
+                                    borderRadius: 0,
                                     padding: 14,
                                     fontSize: 15,
                                 }}
@@ -344,7 +448,7 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                                     style={{
                                         paddingVertical: 10,
                                         paddingHorizontal: 20,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                     }}
                                 >
                                     <ThemedText type="medium" style={{ color: theme.theme.text + '99' }}>Cancel</ThemedText>
@@ -357,7 +461,7 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                                         paddingVertical: 10,
                                         paddingHorizontal: 22,
                                         backgroundColor: createFolderMutation.isPending || !folderName.trim() ? theme.theme.text + '20' : theme.theme.primary,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                         minWidth: 72,
                                         alignItems: 'center',
                                     }}
@@ -374,23 +478,7 @@ export default function FilesView({ fileId, files, header, isFolder, viewType = 
                 </Pressable>
             </KeyboardAvoidingView>
         </Modal>
-        {toastMessage ? (
-            <ThemedView
-                style={{
-                    position: 'absolute',
-                    bottom: 20,
-                    left: 24,
-                    right: 24,
-                    padding: 14,
-                    borderRadius: 10,
-                    alignItems: 'center',
-                    zIndex: 2000,
-                    backgroundColor: toastType === 'error' ? theme.theme.onError : theme.theme.onSuccess,
-                }}
-            >
-                <ThemedText type="smallBold" style={{ color: 'white' }}>{toastMessage}</ThemedText>
-            </ThemedView>
-        ) : null}
+       
     </>
     );
 }

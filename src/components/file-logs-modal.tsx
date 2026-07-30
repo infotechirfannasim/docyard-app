@@ -78,7 +78,7 @@ export function FileLogsModal({ visible, logs, isLoading, fileTitle, theme, onCl
                         onPress={onClose}
                         style={{
                             paddingVertical: 11,
-                            borderRadius: 8,
+                            borderRadius: 0,
                             backgroundColor: theme.theme.primary,
                             alignItems: 'center',
                         }}

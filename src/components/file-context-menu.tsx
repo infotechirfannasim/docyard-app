@@ -44,6 +44,7 @@ export function FileContextMenu({ visible, position, flipped, screenHeight, menu
                                 itemKey={menuItem.itemKey}
                                 text={menuItem.text}
                                 iconName={menuItem.iconName}
+                                iconImage={menuItem.iconImage}
                                 onPress={menuItem.onPress}
                                 theme={theme}
                                 visible={menuItem.visible}

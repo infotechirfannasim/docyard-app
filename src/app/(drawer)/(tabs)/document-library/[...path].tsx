@@ -1,11 +1,8 @@
 import FilesView from '@/components/files-view';
-import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/context/auth-context';
 import { useTypeFiles } from '@/hooks/queries/use-files';
 import { useGetFilesData } from '@/hooks/queries/use-get-files-data.tsx';
-import { useCurrentUser } from '@/hooks/queries/use-user';
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator } from 'react-native';
 
 const typeHeaderMap: Record<string, "Images" | "Videos" | "Documents" | "Others"> = {
   Image: "Images",
@@ -21,30 +18,18 @@ export default function DocumentLibraryFolder() {
       return <TypeFilesView typeParam={path[1] as "Image" | "video" | "doc" | "other"} />;
     }
 
-const { files: filesData, isFilesLoading, user, isUserLoading } = useGetFilesData("document-library", fileId ? Number(fileId) : undefined);
+const { files: filesData, isFilesLoading, user, isUserLoading, error } = useGetFilesData("document-library", fileId ? Number(fileId) : undefined);
 
   return (
-    isUserLoading || isFilesLoading ? (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large"  />
-      </ThemedView>
-    ) : 
-  <FilesView header="Document Library" files={filesData!} fileId={Number(fileId)} isFolder={isFolder === "true"} viewType='document-library'/>
+  <FilesView header="Document Library" files={filesData ?? []} fileId={Number(fileId)} isFolder={isFolder === "true"} viewType='document-library' isLoading={isFilesLoading || isUserLoading} errorMessage={error?.message} />
   );
 }
 
 function TypeFilesView({ typeParam }: { typeParam: "Image" | "video" | "doc" | "other" }) {
-  const { username } = useAuth();
-  const { data: user, isLoading: isUserLoading } = useCurrentUser(username);
-  const { data: typeFiles, isLoading: isTypeLoading } = useTypeFiles(user?.id!, 0, typeParam, !!user?.id);
+  const { user, isLoading: isUserLoading } = useAuth();
+  const { data: typeFiles, isLoading: isTypeLoading, error } = useTypeFiles(user?.id!, 0, typeParam, !!user?.id);
 
   return (
-    isUserLoading || isTypeLoading ? (
-      <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-      </ThemedView>
-    ) : (
-        <FilesView header={typeHeaderMap[typeParam]} files={typeFiles!} isFolder={false} viewType="document-library"/>
-    )
+    <FilesView header={typeHeaderMap[typeParam]} files={typeFiles ?? []} isFolder={false} viewType="document-library" isLoading={isUserLoading || isTypeLoading} errorMessage={error?.message} />
   );
 }

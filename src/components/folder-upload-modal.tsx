@@ -1,15 +1,15 @@
+import { uploadFolder } from '@/api/endpoints/files';
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-provider';
-import { uploadFolder } from '@/api/endpoints/files';
+import { useToast } from '@/context/toast-context';
 import { useMetaDataTemplateDetail, useMetaDataTemplates, useUploadFile, useUploadFolder } from '@/hooks/queries/use-files';
-import { useCurrentUser } from '@/hooks/queries/use-user';
+
 import { FolderUploadDto, MetaDataAttributeDto } from '@/types/api/file-dto';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { StorageAccessFramework } from 'expo-file-system/legacy';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
-import { AnimatedToast } from './animated-toast';
 import { ThemedText } from './themed-text';
 import ThemedTextInput from './themed-text-input';
 import { ThemedView } from './themed-view';
@@ -30,8 +30,7 @@ function formatDisplayDate(date: Date): string {
 
 export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderUploadModalProps) {
     const theme = useTheme();
-    const { username } = useAuth();
-    const { data: user } = useCurrentUser(username);
+    const { username, user } = useAuth();
     const uploadFolderMutation = useUploadFolder();
     const uploadFileMutation = useUploadFile();
     const { data: templates, isLoading: isTemplatesLoading } = useMetaDataTemplates(visible);
@@ -42,8 +41,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
     const [showTemplatePicker, setShowTemplatePicker] = useState(false);
     const [showDatePickerFor, setShowDatePickerFor] = useState<string | null>(null);
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+    const { setToast } = useToast();
     const [uploadProgress, setUploadProgress] = useState<string | null>(null);
     const [filePercent, setFilePercent] = useState(0);
     const [isPickingFolder, setIsPickingFolder] = useState(false);
@@ -53,9 +51,8 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
             setSelectedFolder(null);
             setSelectedTemplateId(templates?.[0]?.id ?? null);
             setAttributeValues({});
-            setToastMessage('');
             setUploadProgress(null);
-            pickFolder();
+            // pickFolder();
         }
     }, [visible]);
 
@@ -129,19 +126,16 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
             onSuccess: async (response) => {
                 const rootFolderId = response?.data?.id;
                 if (!rootFolderId) {
-                    setToastMessage('Folder created but no ID returned');
-                    setToastType('error');
+                    setToast('Folder created but no ID returned', 'error');
                     return;
                 }
 
                 await processSafEntry(selectedFolder.uri, rootFolderId, metaJson, userId);
-                    setToastMessage(`Files uploaded to "${selectedFolder.name}"`);
-                    setToastType('success');
-                    onClose();
+                setToast(`Files uploaded to "${selectedFolder.name}"`, 'success');
+                onClose();
             },
             onError: (error: any) => {
-                setToastMessage(error?.response?.data?.message || error?.message || 'Failed to create folder');
-                setToastType('error');
+                setToast(error?.response?.data?.message || error?.message || 'Failed to create folder', 'error');
                 setUploadProgress(null);
             },
         });
@@ -210,21 +204,21 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                 await new Promise<void>((resolve, reject) => {
                     uploadFileMutation.mutate(
                         {
-                          fileUri: entryUri,
-                          fileName: entryName,
-                          fileType: fileMime,
-                          reqObj: {
-                            createdBy: uid,
-                            updatedBy: uid,
-                            ownerId: uid,
-                            folderId: parentFolderId,
-                            metaJson: JSON.stringify(metaJson),
-                            templateId: selectedTemplateId ?? 1,
-                            name: entryName,
-                            title: entryName,
-                          },
-                          activity: false,
-                          onProgress: (pct) => setFilePercent(pct),
+                            fileUri: entryUri,
+                            fileName: entryName,
+                            fileType: fileMime,
+                            reqObj: {
+                                createdBy: uid,
+                                updatedBy: uid,
+                                ownerId: uid,
+                                folderId: parentFolderId,
+                                metaJson: JSON.stringify(metaJson),
+                                templateId: selectedTemplateId ?? 1,
+                                name: entryName,
+                                title: entryName,
+                            },
+                            activity: false,
+                            onProgress: (pct) => setFilePercent(pct),
                         },
                         { onSuccess: () => resolve(), onError: (err: any) => reject(err) }
                     );
@@ -254,7 +248,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: 12,
-                            borderRadius: 8,
+                            borderRadius: 0,
                             borderWidth: 1,
                             borderColor: theme.theme.text + '20',
                         }}
@@ -285,7 +279,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                     placeholder={`Enter ${attr.name}`}
                     value={attributeValues[attr.name] ?? ''}
                     onChangeText={(text) => setAttributeValues((prev) => ({ ...prev, [attr.name]: text }))}
-                    style={{ borderRadius: 8, padding: 10, fontSize: 14 }}
+                    style={{ borderRadius: 0, padding: 10, fontSize: 14 }}
                 />
             </View>
         );
@@ -304,7 +298,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                 style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#00000060' }}
             >
                 <Pressable style={{ flex: 1, justifyContent: 'center', alignItems: 'center', width: '100%' }} onPress={isUploading ? undefined : onClose}>
-                    <Pressable onPress={() => {}}>
+                    <Pressable onPress={() => { }}>
                         <ThemedView style={{ width: 360, maxHeight: 520, borderRadius: 16, padding: 24, gap: 16 }}>
                             <ThemedText type="mediumBold" style={{ textAlign: 'center' }}>Upload Folder</ThemedText>
 
@@ -314,7 +308,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                                 alignItems: 'center',
                                 gap: 10,
                                 padding: 14,
-                                borderRadius: 10,
+                                borderRadius: 0,
                                 borderWidth: 1,
                                 borderColor: theme.theme.text + '20',
                             }}>
@@ -322,10 +316,12 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                                     <ActivityIndicator size="small" />
                                 ) : (
                                     <>
-                                        <Ionicons name="folder-outline" size={24} color={theme.theme.primary} />
-                                        <ThemedText type="small" style={{ flex: 1 }}>
-                                            {selectedFolder?.name || 'Selecting folder...'}
-                                        </ThemedText>
+                                        <Pressable onPress={pickFolder} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                                            <Ionicons name="folder-outline" size={24} color={theme.theme.primary} />
+                                            <ThemedText type="small" style={{ flex: 1, color: selectedFolder?.name ? theme.theme.text : theme.theme.text + '60' }}>
+                                                {selectedFolder?.name ? `${selectedFolder.name}` : 'Tap to select a folder'}
+                                            </ThemedText>
+                                        </Pressable>
                                     </>
                                 )}
                             </View>
@@ -341,7 +337,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                                         alignItems: 'center',
                                         justifyContent: 'space-between',
                                         padding: 12,
-                                        borderRadius: 10,
+                                        borderRadius: 0,
                                         borderWidth: 1,
                                         borderColor: theme.theme.text + '20',
                                     }}
@@ -407,7 +403,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                                     style={{
                                         flex: 1,
                                         paddingVertical: 11,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                         borderWidth: 1,
                                         borderColor: theme.theme.text + '20',
                                         alignItems: 'center',
@@ -421,7 +417,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                                     style={{
                                         flex: 1,
                                         paddingVertical: 11,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                         backgroundColor: !selectedFolder || isUploading ? theme.theme.text + '20' : theme.theme.primary,
                                         alignItems: 'center',
                                     }}
@@ -450,7 +446,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                     style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#00000060' }}
                     onPress={() => setShowTemplatePicker(false)}
                 >
-                    <Pressable onPress={() => {}}>
+                    <Pressable onPress={() => { }}>
                         <ThemedView style={{ width: 300, maxHeight: 400, borderRadius: 16, padding: 20, gap: 12 }}>
                             <ThemedText type="mediumBold" style={{ textAlign: 'center' }}>Select Template</ThemedText>
                             <View style={{ height: 1, backgroundColor: theme.theme.text + '15' }} />
@@ -468,7 +464,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                                             style={{
                                                 paddingVertical: 12,
                                                 paddingHorizontal: 8,
-                                                borderRadius: 8,
+                                                borderRadius: 0,
                                                 backgroundColor: selectedTemplateId === item.id ? theme.theme.primary + '15' : 'transparent',
                                             }}
                                         >
@@ -486,12 +482,7 @@ export function FolderUploadModal({ visible, currentFolderId, onClose }: FolderU
                 </Pressable>
             </Modal>
 
-            <AnimatedToast
-                message={toastMessage}
-                type={toastType}
-                theme={theme}
-                onFinish={() => setToastMessage('')}
-            />
+
         </Modal>
     );
 }

@@ -5,9 +5,10 @@ import { Pressable, TextInput, TextInputProps, View } from 'react-native';
 
 type ThemedTextInputProps = TextInputProps & {
   isPassword?: boolean;
+  icon? : keyof typeof Ionicons.glyphMap;
 };
 
-export default function ThemedTextInput({ style, isPassword, secureTextEntry, ...props }: ThemedTextInputProps) {
+export default function ThemedTextInput({ style, isPassword, secureTextEntry, icon, ...props }: ThemedTextInputProps) {
   const theme = useTheme();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -28,6 +29,16 @@ export default function ThemedTextInput({ style, isPassword, secureTextEntry, ..
         ]}
         {...props}
       />
+
+      {
+        icon &&
+        <Ionicons 
+        style={{ position: 'absolute', right: 12, top: 12 }}
+        name={`${icon}`}
+        size={20}
+        color={theme.theme.text}
+        />
+      }
 
       {isPassword && (
         <Pressable

@@ -28,7 +28,7 @@ export default function SvgIcon({ style, extension, ...rest }: SvgIconProps) {
         case 'pdf':
             return <PdfIcon height={30} width={30}  {...rest} style={[style]} />;
         case 'pptx':
-            return <PptxIcon height={30} width={30}  {...rest} style={[style]} />;
+            return <PptxIcon height={28} width={28}  {...rest} style={[style]} />;
         case 'zip':
         case 'rar':
             return <RarIcon height={32} width={32} {...rest} style={[style]} />;

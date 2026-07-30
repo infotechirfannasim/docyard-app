@@ -87,7 +87,7 @@ export function FolderPickerModal({
                                             alignItems: 'center',
                                             paddingVertical: 12,
                                             paddingHorizontal: 8,
-                                            borderRadius: 8,
+                                            borderRadius: 0,
                                             gap: 10,
                                         }}
                                     >
@@ -104,31 +104,38 @@ export function FolderPickerModal({
                         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}>
                             <Pressable
                                 onPress={onClose}
+                                disabled={isPickerLoading}
                                 style={{
                                     flex: 1,
                                     paddingVertical: 11,
-                                    borderRadius: 8,
+                                    borderRadius: 0,
                                     borderWidth: 1,
                                     borderColor: theme.theme.text + '20',
                                     alignItems: 'center',
+                                    opacity: isPickerLoading ? 0.5 : 1,
                                 }}
                             >
-                                <ThemedText type="medium" style={{ color: theme.theme.text + '99' }}>Cancel</ThemedText>
+                                <ThemedText type="medium" style={{ color: isPickerLoading ? theme.theme.text + '40' : theme.theme.text + '99' }}>Cancel</ThemedText>
                             </Pressable>
 
                             <Pressable
                                 onPress={() => onConfirm(currentPickerFolderId ?? 0, currentPickerFolderName)}
+                                disabled={isPickerLoading}
                                 style={{
                                     flex: 1,
                                     paddingVertical: 11,
-                                    borderRadius: 8,
-                                    backgroundColor: theme.theme.primary,
+                                    borderRadius: 0,
+                                    backgroundColor: isPickerLoading ? theme.theme.text + '20' : theme.theme.primary,
                                     alignItems: 'center',
                                 }}
                             >
-                                <ThemedText type="mediumBold" style={{ color: 'white' }}>
-                                    {pickerMode === 'copy' ? 'Copy here' : 'Move here'}
-                                </ThemedText>
+                                {isPickerLoading ? (
+                                    <ActivityIndicator size="small" color="white" />
+                                ) : (
+                                    <ThemedText type="mediumBold" style={{ color: 'white' }}>
+                                        {pickerMode === 'copy' ? 'Copy here' : 'Move here'}
+                                    </ThemedText>
+                                )}
                             </Pressable>
                         </View>
                     </ThemedView>

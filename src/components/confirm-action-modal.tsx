@@ -46,7 +46,7 @@ export function ConfirmActionModal({ confirmAction, isArchivalView, theme, onCan
                                 style={{
                                     flex: 1,
                                     paddingVertical: 11,
-                                    borderRadius: 8,
+                                    borderRadius: 0,
                                     borderWidth: 1,
                                     borderColor: theme.theme.text + '20',
                                     alignItems: 'center',
@@ -60,7 +60,7 @@ export function ConfirmActionModal({ confirmAction, isArchivalView, theme, onCan
                                 style={{
                                     flex: 1,
                                     paddingVertical: 11,
-                                    borderRadius: 8,
+                                    borderRadius: 0,
                                     backgroundColor: action?.type === 'delete-permanent' || action?.type === 'delete' ? '#e74c3c' : theme.theme.primary,
                                     alignItems: 'center',
                                 }}

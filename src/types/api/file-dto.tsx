@@ -155,3 +155,151 @@ export type MetaDataTemplateDto = {
   updatedOn: string;
   metaDataAttributeDTOList: MetaDataAttributeDto[];
 };
+
+export type WorkFlowDto = CommonFields & {
+  docId: number;
+  docName: string;
+  remarks?: string | null;
+  status: string;
+  wfLevel: string;
+  wfName: string;
+  wfProcessDefId: string;
+  wfProcessId: string;
+  wfTaskId: string;
+  wfXML?: string | null;
+};
+
+export type FileTagDto = CommonFields & {
+  docId: number;
+  message: string;
+  nameOfUser: string;
+  userId: number;
+};
+
+export type CreateFileTagDto = {
+  docId: number;
+  message: string;
+  userId: number;
+};
+
+export type SharedUserDto = CommonFields & {
+  dlShareId?: number | null;
+  dlCollId?: number | null;
+  dlCollName: string;
+  dlCollEmail: string;
+  dlCollUsername: string;
+  accessRight: string;
+  dlCollPic?: string | null;
+};
+
+export type SharePermission = "VIEW" | "EDITOR" | "COMMENT" | "TAG" ;
+export type ShareType = "ANYONE" | "RESTRICTED" | "NO_SHARING" | string;
+
+export type SharePayloadDto = {
+  appContextPath: string;
+  confirmPassword?: string | null;
+  departmentIds: number[];
+  dlCollaborators: String[];
+  dlDocId: number;
+  externalUserShareLink?: string;
+  folder: boolean;
+  linkExpiredOn?: string | null;
+  message?: string;
+  password?: string | null;
+  shareLink: string;
+  sharePermission: SharePermission;
+  shareType: ShareType;
+  userId: string;
+};
+
+
+export type ShareDto = CommonFields & {
+  dlDocumentId: number;
+  permanentLink: string;
+  shareType: string;
+  accessRight: string;
+  shareNotes?: string | null;
+  status: string;
+  password?: string | null;
+  confirmPassword?: string | null;
+  dlShareCollaboratorDTOList: ShareCollaboratorDto[]; // Replace 'unknown' with CollaboratorDto if available
+  linkExpiredOn?: string | null;
+};
+
+export type ShareCollaboratorDto = CommonFields & {
+  accessRight: string;
+  dlCollaboratorEmail: string;
+  dlCollaboratorId: number;
+  dlShareId: number;
+};
+
+export type DepartmentDto = CommonFields & {
+  code: string;
+  name: string;
+  status: string;
+};
+
+export type CreateFileCommentDto = {
+  createdBy: number;
+  docId: number;
+  message: string;
+  updatedBy: number;
+  userId: number;
+};
+
+export type FileCommentDto = CommonFields & {
+  docId: number;
+  message: string;
+  nameOfUser: string;
+  postedOn: string;
+  userId: number;
+};
+
+export type UpdateFileCommentDto = {
+  createdBy: number;
+  docId: number;
+  id: number,
+  message: string;
+  updatedBy: number;
+  userId: number;
+};
+
+export type ProcessDefinitionDto = {
+  id: string; // Note: String UUID format here, unlike numerical IDs in other DTOs
+  category: string;
+  deploymentId: string;
+  description?: string | null;
+  diagram?: string | null;
+  historyTimeToLive?: number | null;
+  key: string;
+  name: string;
+  resource: string;
+  startableInTasklist: boolean;
+  suspended: boolean;
+  tenantId?: string | null;
+  version: number;
+  versionTag?: string | null;
+};
+
+export type AutomateResponseDto = {
+  data: {
+    DOCUMENT: FileDto;
+    DOCUMENT_STATUS: string;
+    TEMPLATE_NAME: string;
+  };
+  message: string;
+}
+
+
+export type DocumentActivityDto = CommonFields & {
+  action: string;
+  activityPerformedOn: string;
+  activityType: string;
+  docId?: number | null;
+  docName?: string | null;
+  entityId?: number | null;
+  toFolderName?: string | null;
+  userId?: number | null;
+  userName: string;
+};
+

@@ -1,14 +1,14 @@
 import { useAuth } from '@/context/auth-context';
 import { useTheme } from '@/context/theme-provider';
+import { useToast } from '@/context/toast-context';
 import { useMetaDataTemplateDetail, useMetaDataTemplates, useUploadFile } from '@/hooks/queries/use-files';
-import { useCurrentUser } from '@/hooks/queries/use-user';
+
 import { MetaDataAttributeDto } from '@/types/api/file-dto';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
-import { AnimatedToast } from './animated-toast';
 import { ThemedText } from './themed-text';
 import ThemedTextInput from './themed-text-input';
 import { ThemedView } from './themed-view';
@@ -27,29 +27,30 @@ function formatDisplayDate(date: Date): string {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export function UploadModal({ visible, currentFolderId, onClose }: UploadModalProps) {
+export function FileUploadModal({ visible, currentFolderId, onClose }: UploadModalProps) {
     const theme = useTheme();
-    const { username } = useAuth();
-    const { data: user } = useCurrentUser(username);
+    const { username, user } = useAuth();
     const uploadMutation = useUploadFile();
     const { data: templates, isLoading: isTemplatesLoading } = useMetaDataTemplates(visible);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
     const { data: templateDetail, isLoading: isTemplateDetailLoading } = useMetaDataTemplateDetail(selectedTemplateId, visible && !!selectedTemplateId);
 
-    const [selectedFile, setSelectedFile] = useState<{ uri: string; name: string; mimeType: string } | null>(null);
+    const [selectedFiles, setSelectedFiles] = useState<{ uri: string; name: string; mimeType: string }[]>([]);
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
     const [showTemplatePicker, setShowTemplatePicker] = useState(false);
     const [showDatePickerFor, setShowDatePickerFor] = useState<string | null>(null);
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState<'success' | 'error'>('success');
+    const { setToast} = useToast();
     const [uploadPercent, setUploadPercent] = useState(0);
+    const [currentUploadIndex, setCurrentUploadIndex] = useState(0);
+    const [totalUploads, setTotalUploads] = useState(0);
 
     useEffect(() => {
         if (visible) {
-            setSelectedFile(null);
+            setSelectedFiles([]);
             setSelectedTemplateId(templates?.[0]?.id ?? null);
             setAttributeValues({});
-            setToastMessage('');
+            setCurrentUploadIndex(0);
+            setTotalUploads(0);
         }
     }, [visible]);
 
@@ -57,10 +58,14 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
     const attributes: MetaDataAttributeDto[] = (templateData as any)?.metaDataAttributeDtoList ?? (templateData as any)?.metaDataAttributeDTOList ?? [];
 
     const handlePickFile = async () => {
-        const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
-        if (!result.canceled && result.assets?.[0]) {
-            const asset = result.assets[0];
-            setSelectedFile({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType ?? 'application/octet-stream' });
+        const result = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
+        if (!result.canceled && result.assets?.length) {
+            const files = result.assets.map((asset) => ({
+                uri: asset.uri,
+                name: asset.name,
+                mimeType: asset.mimeType ?? 'application/octet-stream',
+            }));
+            setSelectedFiles((prev) => [...prev, ...files]);
         }
     };
 
@@ -79,31 +84,13 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
     };
 
     const handleUpload = async () => {
-        if (!selectedFile || !user?.id) return;
+        if (!selectedFiles.length || !user?.id) return;
 
         const metaJson: Record<string, string> = {};
         attributes.forEach((attr) => {
             metaJson[attr.name] = attributeValues[attr.name]?.trim() || '';
         });
 
-        const decodedName = decodeURIComponent(selectedFile.name);
-
-        const reqObj = {
-            createdBy: user.id,
-            updatedBy: user.id,
-            ownerId: user.id,
-            folderId: currentFolderId && !isNaN(currentFolderId) ? currentFolderId : 0,
-            metaJson: JSON.stringify(metaJson),
-            templateId: selectedTemplateId ?? 1,
-            name: decodedName,
-            title: decodedName,
-        };
-
-        console.log('Upload reqObj:', JSON.stringify(reqObj, null, 2));
-        console.log('Upload file:', selectedFile);
-        console.log('Upload user:', { id: user.id, username });
-
-        const ext = selectedFile.name.split('.').pop()?.toLowerCase();
         const mimeFallback: Record<string, string> = {
             png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
             webp: 'image/webp', bmp: 'image/bmp', svg: 'image/svg+xml',
@@ -113,42 +100,67 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
             txt: 'text/plain', csv: 'text/csv', zip: 'application/zip',
             mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo',
         };
-        const fileMime = selectedFile.mimeType || mimeFallback[ext ?? ''] || 'application/octet-stream';
 
-        setUploadPercent(2);
-        uploadMutation.mutate(
-            {
-              fileUri: selectedFile.uri,
-              fileName: decodedName,
-              fileType: fileMime,
-              reqObj,
-              activity: undefined,
-              onProgress: (pct) => setUploadPercent(pct),
-            },
-            {
-                onSuccess: () => {
-                    setToastMessage(`"${decodedName}" uploaded`);
-                    setToastType('success');
-                    onClose();
-                },
-                onError: (error: any) => {
-                    setUploadPercent(0);
-                    const msg = error?.response?.data?.message || error?.message || 'Upload failed';
-                    console.log('Upload error full:', JSON.stringify({
-                        status: error?.response?.status,
-                        data: error?.response?.data,
-                        message: error?.message,
-                    }, null, 2));
-                    setToastMessage(msg);
-                    setToastType('error');
-                },
+        setTotalUploads(selectedFiles.length);
+        let successCount = 0;
+        let errorCount = 0;
+        let lastError = '';
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            setCurrentUploadIndex(i + 1);
+            setUploadPercent(2);
+
+            const decodedName = decodeURIComponent(file.name);
+            const ext = file.name.split('.').pop()?.toLowerCase();
+            const fileMime = file.mimeType || mimeFallback[ext ?? ''] || 'application/octet-stream';
+
+            const reqObj = {
+                createdBy: user.id,
+                updatedBy: user.id,
+                ownerId: user.id,
+                folderId: currentFolderId && !isNaN(currentFolderId) ? currentFolderId : 0,
+                metaJson: JSON.stringify(metaJson),
+                templateId: selectedTemplateId ?? 1,
+                name: decodedName,
+                title: decodedName,
+            };
+
+            try {
+                await uploadMutation.mutateAsync({
+                    fileUri: file.uri,
+                    fileName: decodedName,
+                    fileType: fileMime,
+                    reqObj,
+                    activity: undefined,
+                    onProgress: (pct) => setUploadPercent(pct),
+                });
+                successCount++;
+            } catch (error: any) {
+                errorCount++;
+                lastError = error?.response?.data?.message || error?.message || 'Upload failed';
+                console.log('Upload error for', decodedName, ':', JSON.stringify({
+                    status: error?.response?.status,
+                    data: error?.response?.data,
+                    message: error?.message,
+                }, null, 2));
             }
-        );
+        }
+
+        setCurrentUploadIndex(0);
+        setTotalUploads(0);
+
+        if (errorCount === 0) {
+            setToast(`Uploaded ${successCount} file(s)`, 'success');
+            onClose();
+        } else {
+            setUploadPercent(0);
+            setToast(`${successCount} uploaded, ${errorCount} failed. ${lastError}`, 'error');
+        }
     };
 
     const selectedTemplateTitle = templates?.find((t) => t.id === selectedTemplateId)?.title;
     const isUploading = uploadMutation.isPending;
-    const overallPercent = (uploadPercent);
 
     const renderField = (attr: MetaDataAttributeDto) => {
         if (isDateType(attr.type)) {
@@ -168,7 +180,7 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: 12,
-                            borderRadius: 8,
+                            borderRadius: 0,
                             borderWidth: 1,
                             borderColor: theme.theme.text + '20',
                         }}
@@ -199,7 +211,7 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                     placeholder={`Enter ${attr.name}`}
                     value={attributeValues[attr.name] ?? ''}
                     onChangeText={(text) => setAttributeValues((prev) => ({ ...prev, [attr.name]: text }))}
-                    style={{ borderRadius: 8, padding: 10, fontSize: 14 }}
+                    style={{ borderRadius: 0, padding: 10, fontSize: 14 }}
                 />
             </View>
         );
@@ -231,22 +243,35 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                                     alignItems: 'center',
                                     gap: 10,
                                     padding: 14,
-                                    borderRadius: 10,
+                                    borderRadius: 0,
                                     borderWidth: 1,
                                     borderColor: theme.theme.text + '20',
                                     borderStyle: 'dashed',
                                 }}
                             >
                                 <Ionicons name="cloud-upload-outline" size={24} color={theme.theme.primary} />
-                                <ThemedText type="small" style={{ flex: 1, color: selectedFile ? theme.theme.text : theme.theme.text + '60' }}>
-                                    {selectedFile ? selectedFile.name : 'Tap to select a file'}
+                                <ThemedText type="small" style={{ flex: 1, color: selectedFiles.length ? theme.theme.text : theme.theme.text + '60' }}>
+                                    {selectedFiles.length ? `${selectedFiles.length} file(s) selected` : 'Tap to select files'}
                                 </ThemedText>
-                                {selectedFile && !isUploading && (
-                                    <Pressable onPress={() => setSelectedFile(null)}>
-                                        <Ionicons name="close-circle" size={20} color={theme.theme.text + '60'} />
-                                    </Pressable>
-                                )}
                             </Pressable>
+
+                            {selectedFiles.length > 0 && !isUploading && (
+                                <View style={{ maxHeight: 140 }}>
+                                    <ScrollView keyboardShouldPersistTaps="handled" style={{ gap: 4 }}>
+                                        {selectedFiles.map((file, idx) => (
+                                            <View key={`${file.name}-${idx}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 3 }}>
+                                                <Ionicons name="document-outline" size={14} color={theme.theme.text + '60'} />
+                                                <ThemedText type="extraSmall" style={{ flex: 1, color: theme.theme.text }} numberOfLines={1}>
+                                                    {file.name}
+                                                </ThemedText>
+                                                <Pressable onPress={() => setSelectedFiles((prev) => prev.filter((_, i) => i !== idx))}>
+                                                    <Ionicons name="close-circle" size={16} color={theme.theme.text + '60'} />
+                                                </Pressable>
+                                            </View>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                            )}
 
                             {/* Template Selector */}
                             <View style={{ gap: 6 }}>
@@ -259,7 +284,7 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                                         alignItems: 'center',
                                         justifyContent: 'space-between',
                                         padding: 12,
-                                        borderRadius: 10,
+                                        borderRadius: 0,
                                         borderWidth: 1,
                                         borderColor: theme.theme.text + '20',
                                     }}
@@ -289,16 +314,19 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                             {/* Upload Progress */}
                             {isUploading && (
                                 <View style={{ gap: 4 }}>
+                                    <ThemedText type="extraSmall" style={{ color: theme.theme.text + '60', textAlign: 'center' }}>
+                                        Uploading {currentUploadIndex} of {totalUploads}
+                                    </ThemedText>
                                     <View style={{ height: 6, borderRadius: 3, backgroundColor: theme.theme.text + '15', overflow: 'hidden' }}>
                                         <View style={{
                                             height: '100%',
-                                            width: `${overallPercent}%`,
+                                            width: `${uploadPercent}%`,
                                             borderRadius: 3,
                                             backgroundColor: theme.theme.primary,
                                         }} />
                                     </View>
                                     <ThemedText type="extraSmall" style={{ color: theme.theme.text + '60', textAlign: 'right' }}>
-                                        {overallPercent}%
+                                        {uploadPercent}%
                                     </ThemedText>
                                 </View>
                             )}
@@ -311,7 +339,7 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                                     style={{
                                         flex: 1,
                                         paddingVertical: 11,
-                                        borderRadius: 8,
+                                        borderRadius: 0,
                                         borderWidth: 1,
                                         borderColor: theme.theme.text + '20',
                                         alignItems: 'center',
@@ -321,19 +349,19 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                                 </Pressable>
                                 <Pressable
                                     onPress={handleUpload}
-                                    disabled={!selectedFile || isUploading}
+                                    disabled={!selectedFiles.length || isUploading}
                                     style={{
                                         flex: 1,
                                         paddingVertical: 11,
-                                        borderRadius: 8,
-                                        backgroundColor: !selectedFile || isUploading ? theme.theme.text + '20' : theme.theme.primary,
+                                        borderRadius: 0,
+                                        backgroundColor: !selectedFiles.length || isUploading ? theme.theme.text + '20' : theme.theme.primary,
                                         alignItems: 'center',
                                     }}
                                 >
                                     {isUploading ? (
                                         <ActivityIndicator size="small" color="white" />
                                     ) : (
-                                        <ThemedText type="mediumBold" style={{ color: 'white' }}>Upload</ThemedText>
+                                        <ThemedText type="mediumBold" style={{ color: 'white' }}>Upload {selectedFiles.length > 1 ? `(${selectedFiles.length})` : ''}</ThemedText>
                                     )}
                                 </Pressable>
                             </View>
@@ -372,7 +400,7 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                                             style={{
                                                 paddingVertical: 12,
                                                 paddingHorizontal: 8,
-                                                borderRadius: 8,
+                                                borderRadius: 0,
                                                 backgroundColor: selectedTemplateId === item.id ? theme.theme.primary + '15' : 'transparent',
                                             }}
                                         >
@@ -390,12 +418,7 @@ export function UploadModal({ visible, currentFolderId, onClose }: UploadModalPr
                 </Pressable>
             </Modal>
 
-            <AnimatedToast
-                message={toastMessage}
-                type={toastType}
-                theme={theme}
-                onFinish={() => setToastMessage('')}
-            />
+           
         </Modal>
     );
 }

@@ -1,7 +1,10 @@
-import { CopyFileDto, CreateFileDto, FileDto, FileLogsDto, FolderUploadDto, MetaDataTemplateDto, MetaDataTemplateListDto, MoveFileDto, RenameFileDto } from "@/types/api/file-dto";
-import { apiClient } from "../client";
-import * as SecureStore from 'expo-secure-store';
-import { AUTH_TOKEN_KEY } from "@/constants/constant-variables";
+import { AutomateResponseDto, CopyFileDto, CreateFileCommentDto, CreateFileDto, CreateFileTagDto, DepartmentDto, DocumentActivityDto, FileCommentDto, FileDto, FileLogsDto, FileTagDto, FolderUploadDto, MetaDataTemplateDto, MetaDataTemplateListDto, MoveFileDto, ProcessDefinitionDto, RenameFileDto, ShareDto, SharedUserDto, SharePayloadDto, UpdateFileCommentDto, WorkFlowDto } from "@/types/api/file-dto";
+import { StorageRequestDto } from "@/types/api/storage";
+import { UserDto } from "@/types/api/user-dto";
+import { Buffer } from "buffer";
+import * as FileSystem from "expo-file-system/legacy";
+import { Platform } from "react-native";
+import { apiClient, getStoredAuthToken } from "../client";
 
 export type RNFSUploadParams = {
   fileUri: string;
@@ -165,7 +168,8 @@ export async function fetchMetaDataList(): Promise<MetaDataTemplateListDto[]> {
 
 export async function fetchMetaData(dataId: number): Promise<MetaDataTemplateDto[]> {
   const { data } = await apiClient.get(`/config/metadata-temp/${dataId}`);
-  return data["data"];
+  const result = data["data"];
+  return result ? (Array.isArray(result) ? result : [result]) : [];
 }
 
 export async function uploadFile(formData: FormData, activity?: boolean, onProgress?: (progress: number) => void): Promise<any> {
@@ -174,51 +178,93 @@ export async function uploadFile(formData: FormData, activity?: boolean, onProgr
   const { data } = await apiClient.post(`/dl/dl-document/upload${queryParams}`, formData, {
     timeout: 120000,
     onUploadProgress: (e) => {
-      if (e.total) onProgress?.(Math.round((e.loaded * 100) / e.total));
+      if (e.total) onProgress?.(Math.min(100, Math.round((e.loaded * 100) / e.total)));
     },
   });
   console.log('Upload response:', JSON.stringify(data, null, 2));
   return data;
 }
 
+export async function uploadProfilePicture(formData: FormData, activity?: boolean, onProgress?: (progress: number) => void): Promise<any> {
+  const { data } = await apiClient.put(`/um/user/profile-picture`, formData, {
+    timeout: 120000,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (e.total) onProgress?.(Math.min(100, Math.round((e.loaded * 100) / e.total)));
+    },
+  });
+  return data;
+}
+
+
+export async function uploadFileVersion(formData: FormData, onProgress?: (progress: number) => void): Promise<any> {
+  const { data } = await apiClient.post(`/dl/doc-version/upload`, formData, {
+    timeout: 120000,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (e) => {
+      if (e.total) onProgress?.(Math.min(100, Math.round((e.loaded * 100) / e.total)));
+    },
+  });
+  return data;
+}
+
+export async function uploadFileVersionRNFS(params: RNFSUploadParams): Promise<any> {
+  const { fileUri, fileName, fileType, reqObj, onProgress } = params;
+  const safeName = fileName.replace(/ /g, '_');
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const token = await getStoredAuthToken();
+  const authHeader = token ? `Bearer ${token}` : `Basic ${process.env.EXPO_PUBLIC_API_BASIC_AUTH}`;
+
+  const reqObjUri = FileSystem.cacheDirectory + 'reqObj.json';
+  await FileSystem.writeAsStringAsync(reqObjUri, JSON.stringify(reqObj));
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${apiUrl}/dl/doc-version/upload`);
+    xhr.setRequestHeader('Authorization', authHeader);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(Math.min(100, Math.round((e.loaded * 100) / e.total)));
+    };
+    xhr.onload = () => {
+      try { resolve(JSON.parse(xhr.responseText)); }
+      catch { resolve(xhr.responseText); }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    const formData = new FormData();
+    formData.append('reqObj', { uri: reqObjUri, type: 'application/json', name: 'blob' } as any);
+    formData.append('doc', { uri: fileUri, type: fileType, name: safeName } as any);
+    xhr.send(formData);
+  });
+}
+
 export async function uploadFileRNFS(params: RNFSUploadParams): Promise<any> {
   const { fileUri, fileName, fileType, reqObj, activity, onProgress } = params;
-  const queryParams = activity !== undefined ? `?activity=${activity}` : '';
-
-  // Use safe name (underscores instead of spaces) to avoid RN FormData encoding
   const safeName = fileName.replace(/ /g, '_');
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const token = await getStoredAuthToken();
+  const authHeader = token ? `Bearer ${token}` : `Basic ${process.env.EXPO_PUBLIC_API_BASIC_AUTH}`;
 
-  // Stream-copy to cache with safe name
-  const expoFs = require('expo-file-system');
-  const FsFile = expoFs.File;
-  const Paths = expoFs.Paths;
-  const sourceFile = new FsFile(fileUri);
-  const cachedFile = new FsFile(Paths.cache, safeName);
-  try {
-    const src = sourceFile.readableStream();
-    const dest = cachedFile.writableStream();
-    await src.pipeTo(dest);
-  } catch {
-    // fall through, use original URI
-  }
+  const reqObjUri = FileSystem.cacheDirectory + 'reqObj.json';
+  await FileSystem.writeAsStringAsync(reqObjUri, JSON.stringify(reqObj));
 
-  const fileFormData = new FormData();
-
-  const reqObjFile = new FsFile(Paths.cache, 'reqObj.json');
-  await reqObjFile.write(JSON.stringify(reqObj));
-  fileFormData.append('reqObj', {
-    uri: reqObjFile.uri,
-    type: 'application/json',
-    name: 'reqObj.json',
-  } as any);
-
-  fileFormData.append('doc', {
-    uri: cachedFile.uri,
-    type: fileType,
-    name: safeName,
-  } as any);
-
-  return uploadFile(fileFormData, activity, onProgress);
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const queryParams = activity !== undefined ? `?activity=${activity}` : '';
+    xhr.open('POST', `${apiUrl}/dl/dl-document/upload${queryParams}`);
+    xhr.setRequestHeader('Authorization', authHeader);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(Math.min(100, Math.round((e.loaded * 100) / e.total)));
+    };
+    xhr.onload = () => {
+      try { resolve(JSON.parse(xhr.responseText)); }
+      catch { resolve(xhr.responseText); }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    const formData = new FormData();
+    formData.append('reqObj', { uri: reqObjUri, type: 'application/json', name: 'blob' } as any);
+    formData.append('doc', { uri: fileUri, type: fileType, name: safeName } as any);
+    xhr.send(formData);
+  });
 }
 
 export async function uploadFolder(payload: FolderUploadDto): Promise<any> {
@@ -233,4 +279,216 @@ export async function searchFile(searchKey: string, userId: number): Promise<Fil
     return [];
   }
   return data["data"] ?? [];
+}
+
+export async function fetchWorkflowList(fileId: number): Promise<WorkFlowDto[]> {
+  const { data } = await apiClient.get(`/dl/dl-document/${fileId}/wf`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+export async function fetchProcessDefinitionXML(processDefId:string, ): Promise<{id:string, bpmn20Xml: string}> {
+  const { data } = await apiClient.get(`/wf/engine/process-definition/${processDefId}/xml`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  return data;
+}
+
+export async function fetchFileTags(fileId: number): Promise<FileTagDto[]> {
+  const { data } = await apiClient.get(`/dl/dl-doc-tag/doc/${fileId}`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+export async function createFileTag(payload: CreateFileTagDto): Promise<FileTagDto> {
+  const { data } = await apiClient.post(`/dl/dl-doc-tag/`, payload);
+  return data["data"];
+}
+
+export async function deleteFileTag(tagId: number, userId: number): Promise<any> {
+  const { data } = await apiClient.delete(`/dl/dl-doc-tag/${tagId}/?userId=${userId}`);
+  return data;
+}
+
+export async function fetchSharedUserData(fileId: number): Promise<SharedUserDto[]> {
+  const { data } = await apiClient.get(`/dl/share/dl-document/${fileId}`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+export async function deleteSharedUserData(fileId: number, dlCollId: number): Promise<any> {
+  const { data } = await apiClient.delete(`/dl/share/dl-document/${fileId}/collaborator/${dlCollId}`);
+  return data["message"] ?? "";
+}
+
+export async function updateSharedUserData(fileId: number, dlCollId: number, access: string): Promise<any> {
+  const { data } = await apiClient.put(`/dl/share/update-access-permission?dlDocId=${fileId}&collId=${dlCollId}&accessRight=${access}`, {});
+  return data["data"];
+}
+
+export async function fetchShare(fileShareId: number): Promise<ShareDto[]> {
+  const { data } = await apiClient.get(`/dl/share/${fileShareId}`);
+  return data["data"];
+}
+
+export async function createShare(payload: SharePayloadDto): Promise<any> {
+  const { data } = await apiClient.post(`/dl/share/`, payload);
+  return data["data"];
+}
+
+
+export async function deleteShare(payload: SharePayloadDto): Promise<any> {
+  const { data } = await apiClient.delete(`/dl/share/remove`, { data: payload });
+  return data["message"];
+}
+
+export async function fetchFileComments(fileId: number): Promise<FileCommentDto[]> {
+  const { data } = await apiClient.get(`/dl/dl-doc-comment/?documentId=${fileId}`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+
+export async function createFileComment(payload: CreateFileCommentDto): Promise<FileCommentDto> {
+  const { data } = await apiClient.post(`/dl/dl-doc-comment/`, payload);
+  return data["data"];
+}
+
+export async function updateComment(payload: UpdateFileCommentDto): Promise<FileCommentDto> {
+  const { data } = await apiClient.put(`/dl/dl-doc-comment/`, payload);
+  return data["data"];
+}
+
+export async function deleteComment(fileId: number): Promise<any> {
+  const { data } = await apiClient.delete(`/dl/dl-doc-comment/${fileId}`);
+  return data;
+}
+
+export async function checkInFile(fileId: number, userId: number): Promise<FileDto> {
+  const { data } = await apiClient.put(`/dl/dl-document/check-in/${fileId}?userId=${userId}`);
+  return data;
+}
+
+export async function checkOutFile(fileId: number, userId: number): Promise<FileDto> {
+  const { data } = await apiClient.put(`/dl/dl-document/check-out/${fileId}?userId=${userId}`);
+  return data["data"];
+}
+
+export async function fetchFileVersion(fileId: number): Promise<FileDto[]> {
+  const { data } = await apiClient.get(`/dl/doc-version/${fileId}`);
+  return data["data"];
+}
+
+export async function fetchProcessDefinition(): Promise<ProcessDefinitionDto[]> {
+  const { data } = await apiClient.get(`/wf/engine/process-definition`);
+  return data;
+}
+
+export async function startAutomate(processKey: string, payload: FileDto): Promise<AutomateResponseDto> {
+  const { data } = await apiClient.post(`/wf/camunda-process/start?processKey=${processKey}&type=MANUAL`, payload);
+  return data;
+}
+
+
+export async function downloadFile(fileId: number, fileName: string, userId: number, mimeType: string, type: "file" | "folder", directoryUri?: string): Promise<{ fileUri: string; directoryUri?: string }> {
+  const response = await apiClient.get( type === "file" ? `/dl/dl-document/download/${fileId}` : `/dl/dl-document/download/folder/${fileId}`, {
+    params: { userId },
+    responseType: "arraybuffer",
+  });
+  console.log(`request response for fileId ${fileId} (${type}):`, response);
+  const base64 = Buffer.from(response.data, "binary").toString("base64");
+
+  if (Platform.OS === "android") {
+    return saveToAndroidDownloads(fileName, mimeType, base64, directoryUri);
+  }
+
+  // iOS fallback — see below
+  const destUri = FileSystem.documentDirectory + fileName;
+  await FileSystem.writeAsStringAsync(destUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+  return { fileUri: destUri };
+}
+
+async function saveToAndroidDownloads(fileName: string, mimeType: string, base64: string, directoryUri?: string): Promise<{ fileUri: string; directoryUri: string }> {
+  const SAF = FileSystem.StorageAccessFramework;
+
+  const dirUri = directoryUri ?? await (async () => {
+    const permissions = await SAF.requestDirectoryPermissionsAsync();
+    if (!permissions.granted) throw new Error("Storage permission denied");
+    return permissions.directoryUri;
+  })();
+
+  const fileUri = await SAF.createFileAsync(dirUri, fileName, mimeType);
+  await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+  return { fileUri, directoryUri: dirUri };
+}
+
+export async function fetchDepartments() : Promise<DepartmentDto[]> {
+  const { data } = await apiClient.get(`/um/department/search?code=&name=&status=Active`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+export async function fetchAllUsers() : Promise<UserDto[]>{
+  const { data } = await apiClient.get(`/um/user/`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+export async function fetchLargeFiles(userId: number) : Promise<FileDto[]>{
+  const { data } = await apiClient.get(`/dl/dl-document/${userId}/large-files/`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+export async function fetchRarelyUsedFiles(userId: number) : Promise<FileDto[]>{
+  const { data } = await apiClient.get(`/dl/dl-document/${userId}/rarely-used-files/`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"] ?? [];
+}
+
+export async function fetchDocumentActivity(userId: number, pageNumber: number) : Promise<DocumentActivityDto[]>{
+  const { data } = await apiClient.get(`/dl/dl-doc-activity/user/${userId}/${pageNumber}/10`);
+  // ✅ If response or response.data is missing/undefined/null, force an empty array []
+  if (!data || data === "") {
+    return [];
+  }
+  return data["data"]["data"] ?? [];
+}
+
+export async function changePassword(currentPassword:string, newPassword: string, userId: number): Promise<any> {
+  const { data } = await apiClient.put(`/um/user/change-password`, { currentPassword, newPassword, userId });
+  return data["message"];
+}
+
+export async function forgotPassword(email: string): Promise<{ message: string; status: number }> {
+  const response = await apiClient.put(`/um/un-auth/forgot-password?email=${email}`);
+  return { message: response.data?.["message"] ?? "", status: response.status };
+}
+
+export async function createStorageRequest(payload: StorageRequestDto): Promise<{ message: string; status: number }> {
+  const response = await apiClient.post(`/um/storage/`, payload);
+  return { message: response.data?.["message"] ?? "", status: response.status };
 }

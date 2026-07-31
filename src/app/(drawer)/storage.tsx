@@ -10,7 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function toGB(bytes: number): string {
     return (bytes / (1024 * 1024 * 1024)).toFixed(2);
@@ -83,25 +83,19 @@ export default function StorageScreen() {
     return new Date(dateStr).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
   };
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.background }}>
-      {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 16 }}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Ionicons name="arrow-back" size={24} color={t.text} />
-        </Pressable>
-        <Ionicons name="cloud-outline" size={20} color={t.primary} />
-        <ThemedText type="mediumBold" style={{ flex: 1 }}>Storage</ThemedText>
-      </View>
+  const insets = useSafeAreaInsets();
 
-      <View style={{ flex: 1, paddingHorizontal: 16, gap: 16 }}>
+  return (
+    
+    
+      <View style={{ flex: 1, justifyContent: "flex-start", paddingHorizontal: 16, gap: 16, backgroundColor: t.background, paddingBottom: insets.bottom }}>
         {/* Top-level segmented pills */}
         <View
           style={{
             flexDirection: "row",
             backgroundColor: t.backgroundElement,
             padding: 4,
-            marginBottom: 20,
+            marginBottom: 5,
           }}
         >
           <Pressable
@@ -118,7 +112,7 @@ export default function StorageScreen() {
               borderWidth: 0.8,
             }}
           >
-            <Ionicons name="add-circle-outline" size={16} color={topTab === "request" ? "#ffffff" : t.text + "90"} />
+            <Ionicons name="cloud" size={16} color={topTab === "request" ? "#ffffff" : t.text + "90"} />
             <ThemedText type="small" style={{ color: topTab === "request" ? "#ffffff" : t.text + "90", fontWeight: topTab === "request" ? "700" : "500" }}>
               Get More Storage
             </ThemedText>
@@ -147,18 +141,20 @@ export default function StorageScreen() {
 
         {/* ---- REQUEST MORE STORAGE ---- */}
         {topTab === "request" && (
-          <ScrollView contentContainerStyle={{ gap: 14, paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
+          <View style={{  gap: 12, backgroundColor: t.backgroundElement, height: 450, justifyContent: "flex-start", elevation: 20, padding: 20  }}>
+
+          <ScrollView contentContainerStyle={{ gap: 14,flexGrow: 1, justifyContent: "flex-start" }} keyboardShouldPersistTaps="handled">
             <View style={{ flexDirection: "row", gap: 12 }}>
               <View style={{ flex: 1, gap: 6 }}>
                 <ThemedText type="smallBold" style={{ color: t.text + "90" }}>Username</ThemedText>
-                <View style={{ backgroundColor: t.backgroundElement,  paddingHorizontal: 12, paddingVertical: 10 }}>
-                  <ThemedText type="small" style={{ color: t.text + "60" }}>{user?.username || username}</ThemedText>
+                <View style={{ backgroundColor: t.backgroundSelected, }}>
+                  <ThemedText type="small" style={{ color: t.text + "80", borderColor: t.text,  paddingHorizontal: 12, paddingVertical: 10,  }}>{user?.username || username}</ThemedText>
                 </View>
               </View>
               <View style={{ flex: 1, gap: 6 }}>
                 <ThemedText type="smallBold" style={{ color: t.text + "90" }}>Email</ThemedText>
-                <View style={{ backgroundColor: t.backgroundElement,  paddingHorizontal: 12, paddingVertical: 10 }}>
-                  <ThemedText type="small" style={{ color: t.text + "60" }}>{user?.email || "-"}</ThemedText>
+                <View style={{ backgroundColor: t.backgroundSelected,  }}>
+                  <ThemedText type="small" style={{ color: t.text + "80", borderColor: t.text,  paddingHorizontal: 12, paddingVertical: 10,  }}>{user?.email || "-"}</ThemedText>
                 </View>
               </View>
             </View>
@@ -166,14 +162,14 @@ export default function StorageScreen() {
             <View style={{ flexDirection: "row", gap: 12 }}>
               <View style={{ flex: 1, gap: 6 }}>
                 <ThemedText type="smallBold" style={{ color: t.text + "90" }}>Consumed (GB)</ThemedText>
-                <View style={{ backgroundColor: t.backgroundElement,  paddingHorizontal: 12, paddingVertical: 10 }}>
-                  <ThemedText type="small" style={{ color: t.text + "60" }}>{toGB(totalOccupied)}</ThemedText>
+                <View style={{ backgroundColor: t.backgroundSelected,  }}>
+                  <ThemedText type="small" style={{ color: t.text + "80" , borderColor: t.text,  paddingHorizontal: 12, paddingVertical: 10, }}>{toGB(totalOccupied)}</ThemedText>
                 </View>
               </View>
               <View style={{ flex: 1, gap: 6 }}>
                 <ThemedText type="smallBold" style={{ color: t.text + "90" }}>Remaining (GB)</ThemedText>
-                <View style={{ backgroundColor: t.backgroundElement,  paddingHorizontal: 12, paddingVertical: 10 }}>
-                  <ThemedText type="small" style={{ color: t.text + "60" }}>{toGB(remaining)}</ThemedText>
+                <View style={{ backgroundColor: t.backgroundSelected,  }}>
+                  <ThemedText type="small" style={{ color: t.text + "80" , borderColor: t.text,  paddingHorizontal: 12, paddingVertical: 10, }}>{toGB(remaining)}</ThemedText>
                 </View>
               </View>
             </View>
@@ -195,7 +191,7 @@ export default function StorageScreen() {
                   }
                 }}
                 keyboardType="numeric"
-                style={{ backgroundColor: t.backgroundElement, paddingHorizontal: 12, paddingVertical: 10, color: t.text }}
+                style={{ backgroundColor: t.backgroundElement, paddingHorizontal: 12, paddingVertical: 10, color: t.text, borderColor: t.text, borderWidth: 0.6 }}
               />
               {allowedStorageError && (
                 <ThemedText type="extraSmall" style={{ color: t.danger }}>
@@ -212,7 +208,7 @@ export default function StorageScreen() {
                 value={remarks}
                 onChangeText={setRemarks}
                 multiline
-                style={{ backgroundColor: t.backgroundElement,  paddingHorizontal: 12, paddingVertical: 10, minHeight: 70, textAlignVertical: "top", color: t.text }}
+                style={{ backgroundColor: t.backgroundElement,  paddingHorizontal: 12, paddingVertical: 10, minHeight: 70, textAlignVertical: "top", color: t.text, borderColor: t.text, borderWidth: 0.6 }}
               />
             </View>
 
@@ -258,6 +254,7 @@ export default function StorageScreen() {
               )}
             </Pressable>
           </ScrollView>
+          </View>
         )}
 
         {/* ---- CLEAN UP MEMORY ---- */}
@@ -322,7 +319,8 @@ export default function StorageScreen() {
                         padding: 12,
                         borderWidth: 1,
                         borderColor: isSelected ? t.primary : t.text + "12",
-                        backgroundColor: isSelected ? t.primary + "08" : "transparent",
+                        backgroundColor: isSelected ? t.primary + "08" : t.backgroundElement,
+                        elevation: 0.5
                       }}
                     >
                       <Ionicons
@@ -337,6 +335,7 @@ export default function StorageScreen() {
                     </Pressable>
                   );
                 })}
+                
                 {!isLoading && currentFiles.length === 0 && (
                   <ThemedText type="small" style={{ textAlign: "center", color: t.text + "50", padding: 30 }}>
                     No files to show
@@ -372,6 +371,5 @@ export default function StorageScreen() {
           </View>
         )}
       </View>
-    </SafeAreaView>
   );
 }

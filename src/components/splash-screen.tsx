@@ -3,6 +3,7 @@ import { useTheme } from "@/context/theme-provider";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedText } from "./themed-text";
 import { ThemedView } from "./themed-view";
 
@@ -59,8 +60,12 @@ export function SplashScreen() {
         ],
     });
 
+    const insets = useSafeAreaInsets();
+
+    console.log("SplashScreen Mounted", "insets: ", insets);
+
     return (
-        <ThemedView style={{ flex: 1, backgroundColor: theme.primary }}>
+        <ThemedView style={{ flex: 1, backgroundColor: theme.primary}}>
             <LinearGradient
                 colors={[theme.primary, theme.drawerBackground]}
                 style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
@@ -85,7 +90,7 @@ export function SplashScreen() {
                     Getting your documents ready
                 </ThemedText>
             </LinearGradient>
-            <View style={[styles.bottomBar, { backgroundColor: theme.drawerBackground }]}>
+            <View style={[styles.bottomBar, { backgroundColor: theme.drawerBackground, paddingBottom: insets.bottom }]}>
                 <ThemedText type="small" style={{ color: theme.secondary, marginBottom: 12, letterSpacing: 2, textTransform: "uppercase", fontSize: 10 }}>
                     Powered by
                 </ThemedText>

@@ -360,10 +360,10 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     name: {
-        marginBottom: 10,
+        marginBottom: 5,
     },
     email: {
-        opacity: 0.7,
+        opacity: 0.5,
         marginBottom: 20,
     },
     editProfile: {

@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs, useSegments } from 'expo-router';
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types';
 import { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, BackHandler, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TAB_ICONS: Record<string, { outline: keyof typeof Ionicons.glyphMap; filled: keyof typeof Ionicons.glyphMap }> = {
   home: { outline: 'home-outline', filled: 'home' },
@@ -14,27 +15,31 @@ const TAB_ICONS: Record<string, { outline: keyof typeof Ionicons.glyphMap; fille
   profile: { outline: 'person-outline', filled: 'person' },
 };
 
-const CENTER_ROUTE = 'document-library';
-
 function CustomTabBar({ navigation }: BottomTabBarProps) {
   const theme = useTheme();
   const segments = useSegments();
+  const insets = useSafeAreaInsets();
   const currentTab = segments[segments.length - 1] || 'home';
-
-  const tabs = ['document-library', 'favourite', 'home', 'trash', 'profile'] as const;
-
+  const tabs: readonly string[] = ['document-library', 'favourite', 'home', 'trash', 'profile'];
   const TAB_LABELS: Record<string, string> = {
     home: 'Home',
     'document-library': 'Documents',
     favourite: 'Favourite',
     trash: 'Trash',
     profile: 'Profile',
+
   };
-
+  const gradientLocations: Record<string, [number, number, ...number[]]> = {
+    'document-library': [0, 0, 0.15, 1],
+    'favourite': [0, 0.225, 0.375, 1],
+    'home': [0, 0.425, 0.575, 1],
+    'trash': [0, 0.625, 0.775, 1],
+    'profile': [0, 0.825, 0.975, 1],
+  };
   const labelOpacity = useRef(new Animated.Value(0)).current;
-
   const scales = useRef<Record<string, Animated.Value>>({});
   const translateYs = useRef<Record<string, Animated.Value>>({});
+  const previousTab = useRef<string | null>(currentTab);
 
   tabs.forEach((name) => {
     if (!scales.current[name]) {
@@ -45,11 +50,26 @@ function CustomTabBar({ navigation }: BottomTabBarProps) {
     }
   });
 
+  function handleBackButtonPress() {
+    if (currentTab === '[...path]') {
+      previousTab.current = currentTab;
+      return false; // Prevent default back button behavior
+    }
+    return false;
+  }
+
   useEffect(() => {
-    if (!currentTab) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleBackButtonPress);
+
+    if (!tabs.includes(currentTab) || previousTab.current === "[...path]") {
+
+      labelOpacity.stopAnimation();
+      labelOpacity.setValue(0);
+      previousTab.current = null;
+      return () => subscription.remove();
+    }
 
     labelOpacity.setValue(0);
-   
 
     tabs.forEach((name) => {
       scales.current[name].stopAnimation();
@@ -75,60 +95,75 @@ function CustomTabBar({ navigation }: BottomTabBarProps) {
 
     Animated.timing(labelOpacity, {
       toValue: 1,
-      duration: 150,
+      duration: 100,
       useNativeDriver: true,
     }).start();
 
     const timer = setTimeout(() => {
       Animated.timing(labelOpacity, {
         toValue: 0,
-        duration: 350,
+        duration: 500,
         useNativeDriver: true,
       }).start();
     }, 600);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      subscription.remove();
+    };
   }, [currentTab]);
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper,{ backgroundColor: theme.theme.background}]}>
       <LinearGradient
-        colors={[theme.theme.primary, theme.theme.drawerBackground]}
+        colors={[theme.theme.nativeTabBackground, theme.theme.nativeTabActiveTintColor, theme.theme.nativeTabActiveTintColor, theme.theme.nativeTabBackground]}
+        locations={gradientLocations[currentTab === "[...path]" ? "document-library" : currentTab] || [0, 0.4, 0.6, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.bar}
+        style={[styles.bar, { height: 65 + insets.bottom, paddingBottom: insets.bottom }]}
       >
         {tabs.map((name) => {
-          const isFocused = currentTab === name;
+          const isFocused = currentTab === "[...path]" ? "document-library" === name : currentTab === name;
           const icons = TAB_ICONS[name] ?? TAB_ICONS.home;
           const scale = scales.current[name] ?? 1;
+          const documentPath = name === "[...path]";
+          if (!documentPath) {
 
-          const onPress = () => {
-            if (!isFocused) {
-              navigation.navigate(name);
+
+            const onPress = () => {
+              if (!isFocused) {
+
+                navigation.navigate(name);
+              }
+            };
+
+            const label = TAB_LABELS[currentTab] ?? (currentTab === "[...path]" ? "Documents" : currentTab);
+
+            if (isFocused) {
+              return (
+                <Pressable key={name} onPress={onPress} style={styles.centerWrapper} hitSlop={12}>
+                  <Animated.View style={[styles.labelContainer, { opacity: labelOpacity }]}>
+                    <Text style={styles.labelText}>{label}</Text>
+                  </Animated.View>
+                  <Animated.View
+                    style={[
+                      styles.centerButton,
+                      { backgroundColor: '#ffffff' },
+                      { transform: [{ scale }, { translateY: translateYs.current[name] ?? 0 }] },
+                    ]}
+                  >
+                    <Ionicons name={icons.filled} size={26} color={theme.theme.nativeTabTintColor} />
+                  </Animated.View>
+                </Pressable>
+              );
             }
-          };
 
-          const label = TAB_LABELS[currentTab] ?? currentTab;
-
-          if (isFocused) {
             return (
-              <Pressable key={name} onPress={onPress} style={styles.centerWrapper} hitSlop={12}>
-                <Animated.View style={[styles.labelContainer, { opacity: labelOpacity }]}>
-                  <Text style={styles.labelText}>{label}</Text>
-                </Animated.View>
-                <Animated.View style={[styles.centerButton, { backgroundColor: theme.theme.nativeTabTintColor }, { transform: [{ scale }, { translateY: translateYs.current[name] ?? 0 }] }]}>
-                  <Ionicons name={icons.filled} size={26} color="#ffffff" />
-                </Animated.View>
+              <Pressable key={name} onPress={onPress} style={styles.tabItem} hitSlop={12}>
+                <Ionicons name={icons.outline} size={24} color={theme.theme.nativeTabIconColor} />
               </Pressable>
             );
           }
-
-          return (
-            <Pressable key={name} onPress={onPress} style={styles.tabItem} hitSlop={12}>
-              <Ionicons name={icons.outline} size={24} color={theme.theme.drawerInactiveTintColor} />
-            </Pressable>
-          );
         })}
       </LinearGradient>
     </View>
@@ -137,17 +172,12 @@ function CustomTabBar({ navigation }: BottomTabBarProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: '100%',
   },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    height: 80,
-    paddingBottom: Platform.OS === 'ios' ? 10 : 0,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     shadowColor: '#000',
@@ -169,7 +199,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconDotActive: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(8, 170, 239, 0.69)',
   },
   centerWrapper: {
     flex: 1,
@@ -198,18 +228,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -28,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8,
+    elevation: 10,
   },
 });
 
 export default function TabLayout() {
+  const theme = useTheme();
   return (
-    <Tabs tabBar={(props) => <CustomTabBar {...props} />} screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
+    <Tabs tabBar={(props) => <CustomTabBar {...props} />} detachInactiveScreens={false} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: theme.theme.background }, animation: 'fade', transitionSpec: { animation: 'timing', config: { duration: 400, easing: Easing.inOut(Easing.ease) } }, tabBarStyle: { position: 'absolute', left: 0, right: 0, bottom: 0} }}>
+      <Tabs.Screen name="home" options={{ title: 'Home', }} />
       <Tabs.Screen name="document-library" options={{ title: 'Documents' }} />
       <Tabs.Screen name="favourite" options={{ title: 'Favourite' }} />
       <Tabs.Screen name="trash" options={{ title: 'Trash' }} />

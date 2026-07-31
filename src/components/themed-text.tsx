@@ -76,57 +76,57 @@ const styles = StyleSheet.create({
   
    mediumBold: {
     fontSize: 16,
-    lineHeight: 24,
+    // lineHeight: 24,
     fontWeight: 600,
   },
    large: {
     fontSize: 18,
-    lineHeight: 26,
+    // lineHeight: 26,
     fontWeight: 300,
   },
   
    largeBold: {
     fontSize: 18,
-    lineHeight: 26,
+    // lineHeight: 26,
     fontWeight: 600,
   },
     extraLarge: {
     fontSize: 22,
-    lineHeight: 30,
+    // lineHeight: 30,
     fontWeight: 400,
   },
   
    extraLargeBold: {
     fontSize: 22,
-    lineHeight: 30,
+    // lineHeight: 30,
     fontWeight: 600,
   },
   smallBold: {
     fontSize: 14,
-    lineHeight: 20,
+    // lineHeight: 20,
     fontWeight: 700,
   },
   default: {
     fontSize: 16,
-    lineHeight: 24,
+    // lineHeight: 24,
     fontWeight: 500,
   },
   title: {
     fontSize: 48,
     fontWeight: 600,
-    lineHeight: 52,
+    // lineHeight: 52,
   },
   subtitle: {
     fontSize: 32,
-    lineHeight: 44,
+    // lineHeight: 44,
     fontWeight: 600,
   },
   link: {
-    lineHeight: 30,
+    // lineHeight: 30,
     fontSize: 14,
   },
   linkPrimary: {
-    lineHeight: 30,
+    // lineHeight: 30,
     fontSize: 14,
     color: '#3c87f7',
   },

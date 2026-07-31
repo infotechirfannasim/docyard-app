@@ -4,6 +4,7 @@ import { useTheme } from "@/context/theme-provider";
 import { useDashboardStats } from "@/hooks/queries/use-dashboard";
 
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
 import {
     DrawerContentComponentProps,
@@ -11,7 +12,7 @@ import {
     DrawerItemList,
 } from "expo-router/drawer";
 import SkeletonLoading from 'expo-skeleton-loading';
-import { Image, Pressable, View } from "react-native";
+import { Image, Pressable, StyleSheet, View } from "react-native";
 import { ThemedText } from "./themed-text";
 
 function formatBytes(bytes: number): string {
@@ -43,9 +44,16 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
         props.navigation.closeDrawer();
         router.push("/storage");
     };
-
     return (
-        <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1, paddingTop: 0 }}>
+        <View style={{ flex: 1 }}>
+            <LinearGradient
+                colors={[theme.theme.drawerGradientStart, theme.theme.drawerGradientMiddle, theme.theme.drawerGradientEnd]}
+                locations={[0, 0.5, 1] as const}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ ...StyleSheet.absoluteFill }}
+            />
+            <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1, paddingTop: 0 }}>
             {/* Header: Logo */}
             <View style={{ alignItems: "center", paddingTop: 40, paddingBottom: 16 }}>
                 <InfotechLogo width={140} style={{ marginBottom: 16 }} />
@@ -94,7 +102,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
 
                     <View style={{ flex: 1 }}>
                         <ThemedText type="smallBold" style={{ color: theme.theme.drawerActiveTintColor }} numberOfLines={1}>
-                            {username ?? "User"}
+                            {user?.name ?? "User"}
                         </ThemedText>
                         <ThemedText type="extraSmall" style={{ color: theme.theme.drawerActiveTintColor + "80" }} numberOfLines={1}>
                             {user?.email ?? ""}
@@ -227,10 +235,10 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                             </ThemedText>
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <ThemedText type="extraSmall" style={{ color: theme.theme.drawerActiveTintColor + 'AA' }}>
+                            <ThemedText type="extraSmall" style={{ color: "#ffffffb5",  }}>
                                 {formatBytes(totalOccupied)} / {formatBytes(totalSize)}
                             </ThemedText>
-                            <Ionicons name="chevron-forward" size={14} color={theme.theme.drawerActiveTintColor + 'AA'} />
+                            <Ionicons name="chevron-forward" size={14} color={"#ffffffb5" } />
                         </View>
                     </View>
                     <View style={{ height: 4, borderRadius: 2, backgroundColor: theme.theme.drawerActiveTintColor + '20', overflow: 'hidden' }}>
@@ -241,7 +249,7 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
                             backgroundColor: theme.theme.drawerActiveTintColor,
                         }} />
                     </View>
-                    <ThemedText type="extraSmall" style={{ color: theme.theme.drawerActiveTintColor + '66' }}>
+                    <ThemedText type="extraSmall" style={{ color: "#ffffffb5"  }}>
                         {formatBytes(remaining)} free
                     </ThemedText>
                 </Pressable>
@@ -285,12 +293,13 @@ export function CustomDrawerContent(props: DrawerContentComponentProps) {
             </View> */}
 
             {/* Footer */}
-            <View style={{ paddingBottom: 20, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}>
-                <ThemedText type={"small"} style={{ opacity: 0.6, color: "white", marginRight: 4 }}>
+            <View style={{ alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
+                <ThemedText type={"small"} style={{ color: "#ffffffb5" , marginRight: 4 }}>
                     Powered by
                 </ThemedText>
                 <InfotechLogo width={100} />
             </View>
-        </DrawerContentScrollView>
+            </DrawerContentScrollView>
+        </View>
     );
 }

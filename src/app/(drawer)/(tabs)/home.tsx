@@ -109,7 +109,7 @@ export default function Home() {
                 <Pressable
                   key={index}
                   android_ripple={{ color: theme.theme.secondary + "20" }}
-                  onPress={() => router.push(`/document-library/type/${item.type}`)}
+                  onPress={() => router.push(`/document-type?type=${item.type}`)}
                   style={[styles.headerCardItem, { borderColor: "transparent" }]}
                 >
                   <LinearGradient

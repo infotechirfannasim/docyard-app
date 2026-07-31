@@ -14,7 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import SkeletonLoading from 'expo-skeleton-loading';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, BackHandler, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FabActionButton } from './fab-action-button';
 
 type ViewType = 'default' | 'favourite' | 'recent' | 'trash' | 'shared-by-me' | 'shared-with-me' | 'archival' | 'document-library';
@@ -30,7 +31,6 @@ type FilesViewProps = {
 };
 
 export default function FilesView({ fileId, files, header, isFolder, isLoading, errorMessage, viewType = 'default' }: FilesViewProps) {
-    console.log("Rendering FilesView with props:", { fileId, files, header, isFolder, isLoading, viewType });
     const rowRef = useRef<View>(null);
     const listRef = useRef<FlatFileListHandle>(null);
     const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
@@ -55,9 +55,21 @@ export default function FilesView({ fileId, files, header, isFolder, isLoading, 
     const [searchQuery, setSearchQuery] = useState('');
     const [activeSearch, setActiveSearch] = useState('');
 
+    function handleBackButtonPress() {
+        if(header.includes("Images") || header.includes("Videos") || header.includes("Documents") || header.includes("Others")) {
+            router.back();
+            return true;
+        }
+        return false;
+    }
     useEffect(() => {
+        const subscription = BackHandler.addEventListener('hardwareBackPress', ()=>{
+            console.log("Back button pressed, handling in FilesView");
+            return handleBackButtonPress();
+        });
         setSearchQuery('');
         setActiveSearch('');
+        return () => subscription.remove();
     }, [fileId, header]);
 
     useEffect(() => {
@@ -141,9 +153,10 @@ export default function FilesView({ fileId, files, header, isFolder, isLoading, 
     }
 
     const isMultiSelectAllowed = ['document-library', 'default', 'favourite', 'archival', 'shared-with-me', 'shared-by-me', 'trash'].includes(viewType);
+    const insets = useSafeAreaInsets();
 
     return (<>
-        <ThemedView style={styles.container}>
+        <ThemedView style={[styles.container, { paddingBottom : (header ===  "Share By Me" || header === "Share To Me" || header === "Archival" )? insets.bottom : 0 }]}>
             {isSelectionActive ? (
                 <BatchActionFab
                     selectedCount={selectionInfo.selectedCount}

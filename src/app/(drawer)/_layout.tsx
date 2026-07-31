@@ -26,6 +26,9 @@ function AppLayout() {
         
         screenOptions={{
 
+          sceneStyle: {
+            backgroundColor: theme.theme.background,
+          },
 
           drawerContentStyle: {
             padding: 0,
@@ -38,7 +41,7 @@ function AppLayout() {
             backgroundColor: theme.theme.background,
           },
           drawerStyle: {
-            width: 280,
+            width: 260,
             padding: 0,
             margin: 0,
             backgroundColor: theme.theme.drawerBackground,
@@ -79,9 +82,13 @@ function AppLayout() {
             ),
           }}
         />
+        <Drawer.Screen name="storage" options={{ drawerItemStyle: { display: 'none' } }} />
+        <Drawer.Screen name="document-type" options={{ drawerItemStyle: { display: 'none' } }} />
         <Drawer.Screen
           name="share-to-me"
+
           options={{
+
 
             drawerLabel: ({ color, focused }) => drawerLabel(color, "Shared To Me"),
             title: "Share To Me",
